@@ -1,16 +1,25 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
-public class ScenarioRemovedEventDto extends HubEventDto {
-    @NotBlank
-    private String name;
+import java.time.Instant;
+
+public record ScenarioRemovedEventDto(
+        @JsonAlias({
+                "hubId", "hub_id" }) String hubId,
+        Instant timestamp,
+        String name) implements HubEventDto {
+    @Override
+    public String getHubId() {
+        return hubId;
+    }
+
+    @Override
+    public Instant getTimestamp() {
+        return timestamp;
+    }
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 }

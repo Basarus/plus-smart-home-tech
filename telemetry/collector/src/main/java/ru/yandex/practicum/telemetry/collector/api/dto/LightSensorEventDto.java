@@ -1,27 +1,27 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
-public class LightSensorEventDto extends SensorEventDto {
-    @NotNull
-    private Integer linkQuality;
+import java.time.Instant;
 
-    @NotNull
-    private Integer luminosity;
-
-    public Integer getLinkQuality() {
-        return linkQuality;
+public record LightSensorEventDto(
+        String id,
+        String hubId,
+        Instant timestamp,
+        @JsonAlias("link_quality") int linkQuality,
+        int luminosity) implements SensorEventDto {
+    @Override
+    public String getId() {
+        return id;
     }
 
-    public void setLinkQuality(Integer linkQuality) {
-        this.linkQuality = linkQuality;
+    @Override
+    public String getHubId() {
+        return hubId;
     }
 
-    public Integer getLuminosity() {
-        return luminosity;
-    }
-
-    public void setLuminosity(Integer luminosity) {
-        this.luminosity = luminosity;
+    @Override
+    public Instant getTimestamp() {
+        return timestamp;
     }
 }

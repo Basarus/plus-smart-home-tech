@@ -2,8 +2,6 @@ package ru.yandex.practicum.telemetry.collector.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
 
@@ -14,26 +12,9 @@ import java.time.Instant;
         @JsonSubTypes.Type(value = ScenarioAddedEventDto.class, name = "SCENARIO_ADDED"),
         @JsonSubTypes.Type(value = ScenarioRemovedEventDto.class, name = "SCENARIO_REMOVED")
 })
-public abstract class HubEventDto {
-    @NotBlank
-    private String hubId;
+public sealed interface HubEventDto
+        permits DeviceAddedEventDto, DeviceRemovedEventDto, ScenarioAddedEventDto, ScenarioRemovedEventDto {
+    String getHubId();
 
-    @NotNull
-    private Instant timestamp;
-
-    public String getHubId() {
-        return hubId;
-    }
-
-    public void setHubId(String hubId) {
-        this.hubId = hubId;
-    }
-
-    public Instant getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Instant timestamp) {
-        this.timestamp = timestamp;
-    }
+    Instant getTimestamp();
 }

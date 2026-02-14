@@ -1,27 +1,30 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
-public class DeviceAddedEventDto extends HubEventDto {
-    @NotBlank
-    private String id;
+import java.time.Instant;
 
-    @NotBlank
-    private String deviceType;
+public record DeviceAddedEventDto(
+        @JsonAlias({
+                "hubId", "hub_id" }) String hubId,
+        Instant timestamp,
+        String id,
+        @JsonAlias({ "deviceType", "device_type" }) String deviceType) implements HubEventDto {
+    @Override
+    public String getHubId() {
+        return hubId;
+    }
+
+    @Override
+    public Instant getTimestamp() {
+        return timestamp;
+    }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public String getDeviceType() {
         return deviceType;
-    }
-
-    public void setDeviceType(String deviceType) {
-        this.deviceType = deviceType;
     }
 }

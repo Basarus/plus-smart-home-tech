@@ -1,27 +1,27 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
-public class TemperatureSensorEventDto extends SensorEventDto {
-    @NotNull
-    private Integer temperatureC;
+import java.time.Instant;
 
-    @NotNull
-    private Integer temperatureF;
-
-    public Integer getTemperatureC() {
-        return temperatureC;
+public record TemperatureSensorEventDto(
+        String id,
+        String hubId,
+        Instant timestamp,
+        @JsonAlias("temperature_c") int temperatureC,
+        @JsonAlias("temperature_f") int temperatureF) implements SensorEventDto {
+    @Override
+    public String getId() {
+        return id;
     }
 
-    public void setTemperatureC(Integer temperatureC) {
-        this.temperatureC = temperatureC;
+    @Override
+    public String getHubId() {
+        return hubId;
     }
 
-    public Integer getTemperatureF() {
-        return temperatureF;
-    }
-
-    public void setTemperatureF(Integer temperatureF) {
-        this.temperatureF = temperatureF;
+    @Override
+    public Instant getTimestamp() {
+        return timestamp;
     }
 }

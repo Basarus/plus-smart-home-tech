@@ -1,38 +1,28 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
-public class MotionSensorEventDto extends SensorEventDto {
-    @NotNull
-    private Integer linkQuality;
+import java.time.Instant;
 
-    @NotNull
-    private Boolean motion;
-
-    @NotNull
-    private Integer voltage;
-
-    public Integer getLinkQuality() {
-        return linkQuality;
+public record MotionSensorEventDto(
+        String id,
+        String hubId,
+        Instant timestamp,
+        @JsonAlias("link_quality") int linkQuality,
+        boolean motion,
+        int voltage) implements SensorEventDto {
+    @Override
+    public String getId() {
+        return id;
     }
 
-    public void setLinkQuality(Integer linkQuality) {
-        this.linkQuality = linkQuality;
+    @Override
+    public String getHubId() {
+        return hubId;
     }
 
-    public Boolean getMotion() {
-        return motion;
-    }
-
-    public void setMotion(Boolean motion) {
-        this.motion = motion;
-    }
-
-    public Integer getVoltage() {
-        return voltage;
-    }
-
-    public void setVoltage(Integer voltage) {
-        this.voltage = voltage;
+    @Override
+    public Instant getTimestamp() {
+        return timestamp;
     }
 }

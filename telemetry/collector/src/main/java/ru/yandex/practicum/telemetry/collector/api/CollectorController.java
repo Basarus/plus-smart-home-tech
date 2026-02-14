@@ -1,36 +1,30 @@
 package ru.yandex.practicum.telemetry.collector.api;
 
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.telemetry.collector.api.dto.HubEventDto;
 import ru.yandex.practicum.telemetry.collector.api.dto.SensorEventDto;
-import ru.yandex.practicum.telemetry.collector.mapper.AvroEventMapper;
-import ru.yandex.practicum.telemetry.collector.service.EventProducer;
+import ru.yandex.practicum.telemetry.collector.service.CollectorService;
 
 @RestController
 public class CollectorController {
-    private final AvroEventMapper mapper;
-    private final EventProducer producer;
+    private final CollectorService collectorService;
 
-    public CollectorController(AvroEventMapper mapper, EventProducer producer) {
-        this.mapper = mapper;
-        this.producer = producer;
+    public CollectorController(CollectorService collectorService) {
+        this.collectorService = collectorService;
     }
 
-    @PostMapping({"/events/sensors", "/events/sensors/"})
-    public ResponseEntity<Void> collectSensor(@Valid @RequestBody SensorEventDto event) {
-        var avro = mapper.toAvro(event);
-        producer.sendSensor(event.getHubId(), avro);
+    @PostMapping("/events/sensors")
+    public ResponseEntity<Void> collectSensorEvent(@RequestBody SensorEventDto event) {
+        collectorService.collectSensorEvent(event);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping({"/events/hubs", "/events/hubs/"})
-    public ResponseEntity<Void> collectHub(@Valid @RequestBody HubEventDto event) {
-        var avro = mapper.toAvro(event);
-        producer.sendHub(event.getHubId(), avro);
+    @PostMapping("/events/hubs")
+    public ResponseEntity<Void> collectHubEvent(@RequestBody HubEventDto event) {
+        collectorService.collectHubEvent(event);
         return ResponseEntity.ok().build();
     }
 }

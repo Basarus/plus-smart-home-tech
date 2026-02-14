@@ -1,42 +1,36 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
+import java.time.Instant;
 import java.util.List;
 
-public class ScenarioAddedEventDto extends HubEventDto {
-    @NotBlank
-    private String name;
+public record ScenarioAddedEventDto(
+        @JsonAlias({
+                "hubId", "hub_id" }) String hubId,
+        Instant timestamp,
+        String name,
+        List<ScenarioConditionDto> conditions,
+        List<DeviceActionDto> actions) implements HubEventDto {
+    @Override
+    public String getHubId() {
+        return hubId;
+    }
 
-    @NotEmpty
-    private List<@Valid ScenarioConditionDto> conditions;
-
-    @NotEmpty
-    private List<@Valid DeviceActionDto> actions;
+    @Override
+    public Instant getTimestamp() {
+        return timestamp;
+    }
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public List<ScenarioConditionDto> getConditions() {
         return conditions;
     }
 
-    public void setConditions(List<ScenarioConditionDto> conditions) {
-        this.conditions = conditions;
-    }
-
     public List<DeviceActionDto> getActions() {
         return actions;
-    }
-
-    public void setActions(List<DeviceActionDto> actions) {
-        this.actions = actions;
     }
 }
