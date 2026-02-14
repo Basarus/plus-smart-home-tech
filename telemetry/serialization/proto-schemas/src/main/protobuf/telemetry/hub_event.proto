@@ -1,6 +1,9 @@
 syntax = "proto3";
 
-package ru.yandex.practicum.grpc.telemetry.event;
+package telemetry.message.event;
+
+option java_multiple_files = true;
+option java_package = "ru.yandex.practicum.grpc.telemetry.event";
 
 import "google/protobuf/timestamp.proto";
 
@@ -47,11 +50,7 @@ message ScenarioConditionProto {
   string sensor_id = 1;
   ConditionTypeProto type = 2;
   ConditionOperationProto operation = 3;
-
-  oneof value {
-    int32 int_value = 4;
-    bool bool_value = 5;
-  }
+  int32 value = 4;
 }
 
 message DeviceActionProto {

@@ -1,6 +1,9 @@
 syntax = "proto3";
 
-package ru.yandex.practicum.grpc.telemetry.collector;
+package telemetry.service.collector;
+
+option java_multiple_files = true;
+option java_package = "ru.yandex.practicum.grpc.telemetry.collector";
 
 import "google/protobuf/empty.proto";
 import "telemetry/sensor_event.proto";
