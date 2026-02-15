@@ -1,14 +1,22 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
 
 public record DeviceRemovedEventDto(
-        @JsonAlias({
+
+        @NotBlank @JsonAlias({
                 "hubId", "hub_id" }) String hubId,
-        Instant timestamp,
-        String id) implements HubEventDto {
+
+        @NotNull Instant timestamp,
+
+        @NotBlank String id
+
+    ) implements HubEventDto {
+
     @Override
     public String getHubId() {
         return hubId;

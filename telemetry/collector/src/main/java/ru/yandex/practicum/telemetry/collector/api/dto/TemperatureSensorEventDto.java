@@ -1,15 +1,25 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
 
 public record TemperatureSensorEventDto(
-        String id,
-        String hubId,
-        Instant timestamp,
-        @JsonAlias("temperature_c") int temperatureC,
-        @JsonAlias("temperature_f") int temperatureF) implements SensorEventDto {
+
+        @NotBlank String id,
+
+        @NotBlank String hubId,
+
+        @NotNull Instant timestamp,
+
+        @NotNull @JsonAlias("temperature_c") Integer temperatureC,
+
+        @NotNull @JsonAlias("temperature_f") Integer temperatureF
+
+) implements SensorEventDto {
+
     @Override
     public String getId() {
         return id;
