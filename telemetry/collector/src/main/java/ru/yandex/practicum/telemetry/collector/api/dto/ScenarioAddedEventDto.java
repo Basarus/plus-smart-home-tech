@@ -10,18 +10,17 @@ import java.time.Instant;
 import java.util.List;
 
 public record ScenarioAddedEventDto(
-
-        @NotBlank @JsonAlias({
-                "hubId", "hub_id" }) String hubId,
+        @JsonAlias({
+                "hubId", "hub_id" }) @NotBlank String hubId,
 
         @NotNull Instant timestamp,
 
         @NotBlank String name,
 
-        @NotEmpty List<@Valid ScenarioConditionDto> conditions,
+        @NotNull @Valid List<ScenarioConditionDto> conditions,
 
-        @NotEmpty List<@Valid DeviceActionDto> actions
-
+        @NotNull @Valid List<DeviceActionDto> actions
+        
     ) implements HubEventDto {
 
     @Override
