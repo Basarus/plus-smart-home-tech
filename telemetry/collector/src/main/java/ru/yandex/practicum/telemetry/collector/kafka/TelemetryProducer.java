@@ -1,5 +1,6 @@
 package ru.yandex.practicum.telemetry.collector.kafka;
 
+import jakarta.annotation.PreDestroy;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
@@ -14,7 +15,6 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.telemetry.collector.config.KafkaProps;
 import ru.yandex.practicum.telemetry.collector.config.TopicsProperties;
 
-import jakarta.annotation.PreDestroy;
 import java.io.ByteArrayOutputStream;
 import java.util.Properties;
 
@@ -31,19 +31,13 @@ public class TelemetryProducer {
     public void sendSensorEvent(SensorEventAvro event) {
         String key = event.getHubId();
         Long timestamp = toKafkaTimestamp(event.getTimestamp());
-        byte[] value = serialize(event);
-
-        ProducerRecord<String, byte[]> record = new ProducerRecord<>(topics.sensors(), null, timestamp, key, value);
-        producer.send(record);
+        producer.send(new ProducerRecord<>(topics.sensors(), null, timestamp, key, serialize(event)));
     }
 
     public void sendHubEvent(HubEventAvro event) {
         String key = event.getHubId();
         Long timestamp = toKafkaTimestamp(event.getTimestamp());
-        byte[] value = serialize(event);
-
-        ProducerRecord<String, byte[]> record = new ProducerRecord<>(topics.hubs(), null, timestamp, key, value);
-        producer.send(record);
+        producer.send(new ProducerRecord<>(topics.hubs(), null, timestamp, key, serialize(event)));
     }
 
     private Properties producerProps(KafkaProps props) {
