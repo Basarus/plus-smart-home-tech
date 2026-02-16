@@ -1,9 +1,8 @@
 package ru.yandex.practicum.telemetry.collector.api;
 
+import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.telemetry.collector.api.dto.HubEventDto;
 import ru.yandex.practicum.telemetry.collector.api.dto.SensorEventDto;
 import ru.yandex.practicum.telemetry.collector.service.CollectorService;
@@ -11,19 +10,19 @@ import ru.yandex.practicum.telemetry.collector.service.CollectorService;
 @RestController
 @Validated
 public class CollectorController {
-    private final CollectorService collectorService;
+    private final CollectorService service;
 
-    public CollectorController(CollectorService collectorService) {
-        this.collectorService = collectorService;
+    public CollectorController(CollectorService service) {
+        this.service = service;
     }
 
     @PostMapping("/events/sensors")
-    public void collectSensorEvent(@RequestBody SensorEventDto event) {
-        collectorService.collectSensorEvent(event);
+    public void sensors(@RequestBody @Valid SensorEventDto event) {
+        service.collectSensorEvent(event);
     }
 
     @PostMapping("/events/hubs")
-    public void collectHubEvent(@RequestBody HubEventDto event) {
-        collectorService.collectHubEvent(event);
+    public void hubs(@RequestBody @Valid HubEventDto event) {
+        service.collectHubEvent(event);
     }
 }

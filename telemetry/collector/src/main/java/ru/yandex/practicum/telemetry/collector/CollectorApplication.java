@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @SpringBootApplication
-@ConfigurationPropertiesScan
+@ConfigurationPropertiesScan("ru.yandex.practicum.telemetry.collector.config")
 public class CollectorApplication {
     public static void main(String[] args) {
         SpringApplication.run(CollectorApplication.class, args);
