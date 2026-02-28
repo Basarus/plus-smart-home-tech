@@ -1,0 +1,13 @@
+server:
+  port: 59091
+
+spring:
+  application:
+    name: aggregator
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+aggregator:
+  topics:
+    sensors: telemetry.sensors.v1
+    snapshots: telemetry.snapshots.v1
