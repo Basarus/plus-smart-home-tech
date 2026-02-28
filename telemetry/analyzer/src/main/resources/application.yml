@@ -1,0 +1,56 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: analyzer
+
+  datasource:
+    url: ${ANALYZER_DB_URL:jdbc:postgresql://localhost:5432/analyzer}
+    username: ${ANALYZER_DB_USER:analyzer}
+    password: ${ANALYZER_DB_PASSWORD:analyzer}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+analyzer:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+    topics:
+      hubs: ${KAFKA_TOPIC_HUBS:telemetry.hubs.v1}
+      snapshots: ${KAFKA_TOPIC_SNAPSHOTS:telemetry.snapshots.v1}
+
+    consumers:
+      hub-events:
+        group-id: ${KAFKA_GROUP_HUB_EVENTS:analyzer-hub-events}
+        poll-timeout-ms: ${KAFKA_HUB_POLL_TIMEOUT_MS:1000}
+        max-poll-records: ${KAFKA_HUB_MAX_POLL_RECORDS:200}
+        enable-auto-commit: ${KAFKA_HUB_ENABLE_AUTO_COMMIT:true}
+
+      snapshots:
+        group-id: ${KAFKA_GROUP_SNAPSHOTS:analyzer-snapshots}
+        poll-timeout-ms: ${KAFKA_SNAP_POLL_TIMEOUT_MS:1000}
+        max-poll-records: ${KAFKA_SNAP_MAX_POLL_RECORDS:200}
+        enable-auto-commit: ${KAFKA_SNAP_ENABLE_AUTO_COMMIT:false}
+
+    snapshot:
+      value-class: ${KAFKA_SNAPSHOT_VALUE_CLASS:ru.yandex.practicum.kafka.telemetry.snapshot.HubSnapshotAvro}
+
+grpc:
+  client:
+    hub-router:
+      address: 'static://localhost:59090'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext

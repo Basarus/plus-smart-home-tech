@@ -7,6 +7,8 @@ option java_package = "ru.yandex.practicum.grpc.telemetry.event";
 
 import "google/protobuf/timestamp.proto";
 
+option java_outer_classname = "HubEventProto";
+
 enum DeviceTypeProto {
   MOTION_SENSOR = 0;
   TEMPERATURE_SENSOR = 1;
@@ -81,4 +83,20 @@ message HubEventProto {
     ScenarioAddedEventProto scenario_added = 5;
     ScenarioRemovedEventProto scenario_removed = 6;
   }
+}
+
+message DeviceActionProto {
+  string sensor_id = 1;
+  string type = 2;
+
+  oneof value {
+    int32 int_value = 3;
+  }
+}
+
+message DeviceActionRequest {
+  string hub_id = 1;
+  string scenario_name = 2;
+  DeviceActionProto action = 3;
+  google.protobuf.Timestamp timestamp = 4;
 }
