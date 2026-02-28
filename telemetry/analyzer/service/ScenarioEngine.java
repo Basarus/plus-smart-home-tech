@@ -3,9 +3,8 @@ package ru.yandex.practicum.telemetry.analyzer.service;
 import com.google.protobuf.Timestamp;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
 import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc.HubRouterControllerBlockingStub;
-import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto;
 
 import java.time.Instant;
 import java.util.List;
@@ -62,15 +61,15 @@ public class ScenarioEngine {
         };
     }
 
-    private HubEventProto.DeviceActionRequest toRequest(String hubId, String scenarioName, ScenarioActionRuntime a) {
-        HubEventProto.ActionTypeProto type;
+    private HubEventMessagesProto.DeviceActionRequest toRequest(String hubId, String scenarioName, ScenarioActionRuntime a) {
+        HubEventMessagesProto.ActionTypeProto type;
         try {
-            type = HubEventProto.ActionTypeProto.valueOf(a.type());
+            type = HubEventMessagesProto.ActionTypeProto.valueOf(a.type());
         } catch (Exception e) {
-            type = HubEventProto.ActionTypeProto.ACTION_TYPE_UNSPECIFIED;
+            type = HubEventMessagesProto.ActionTypeProto.ACTION_TYPE_UNSPECIFIED;
         }
 
-        HubEventProto.DeviceActionProto action = HubEventProto.DeviceActionProto.newBuilder()
+        HubEventMessagesProto.DeviceActionProto action = HubEventMessagesProto.DeviceActionProto.newBuilder()
                 .setType(type)
                 .setValue(a.value())
                 .build();
@@ -81,7 +80,7 @@ public class ScenarioEngine {
                 .setNanos(now.getNano())
                 .build();
 
-        return HubEventProto.DeviceActionRequest.newBuilder()
+        return HubEventMessagesProto.DeviceActionRequest.newBuilder()
                 .setHubId(hubId)
                 .setScenarioName(scenarioName)
                 .setAction(action)
