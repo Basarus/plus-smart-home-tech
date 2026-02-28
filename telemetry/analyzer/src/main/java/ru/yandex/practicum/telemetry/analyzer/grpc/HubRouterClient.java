@@ -2,18 +2,19 @@ package ru.yandex.practicum.telemetry.analyzer.grpc;
 
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
-import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
+import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc.HubRouterControllerBlockingStub;
+import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto;
 
 @Service
 public class HubRouterClient {
-    private final HubRouterControllerGrpc.HubRouterControllerBlockingStub client;
 
-    public HubRouterClient(@GrpcClient("hub-router") HubRouterControllerGrpc.HubRouterControllerBlockingStub client) {
-        this.client = client;
+    private final HubRouterControllerBlockingStub hubRouterClient;
+
+    public HubRouterClient(@GrpcClient("hub-router") HubRouterControllerBlockingStub hubRouterClient) {
+        this.hubRouterClient = hubRouterClient;
     }
 
-    public void handleDeviceAction(HubEventProto.DeviceActionRequest request) {
-        client.handleDeviceAction(request);
+    public void handleDeviceAction(HubEventMessagesProto.DeviceActionRequest request) {
+        hubRouterClient.handleDeviceAction(request);
     }
 }
