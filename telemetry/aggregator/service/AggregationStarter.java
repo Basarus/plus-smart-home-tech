@@ -31,9 +31,9 @@ public class AggregationStarter {
 
     public void start() {
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
-
-        consumer.subscribe(List.of(props.getTopics().getSensors()));
         try {
+            consumer.subscribe(List.of(props.getTopics().getSensors()));
+
             while (running.get()) {
                 ConsumerRecords<String, SensorEventAvro> records =
                         consumer.poll(Duration.ofMillis(props.getKafka().getPollTimeoutMs()));
@@ -42,30 +42,38 @@ public class AggregationStarter {
 
                 records.forEach(r -> processEvent(r.value()));
 
-                consumer.commitSync();
+                try {
+                    consumer.commitSync();
+                } catch (Exception e) {
+                    log.warn("commitSync failed", e);
+                }
             }
         } catch (WakeupException e) {
             if (running.get()) throw e;
         } catch (Exception e) {
-            log.error("Ошибка во время обработки событий от датчиков", e);
+            log.error("Aggregation loop crashed", e);
         } finally {
             try {
                 try {
                     producer.flush();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.warn("producer.flush failed", e);
                 }
                 try {
                     consumer.commitSync();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.warn("final commitSync failed", e);
                 }
             } finally {
                 try {
                     consumer.close();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.warn("consumer.close failed", e);
                 }
                 try {
                     producer.close();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    log.warn("producer.close failed", e);
                 }
             }
         }
@@ -80,10 +88,7 @@ public class AggregationStarter {
         SensorsSnapshotAvro snapshot = updated.get();
         String hubId = snapshot.getHubId() == null ? null : snapshot.getHubId().toString();
 
-        ProducerRecord<String, SensorsSnapshotAvro> record =
-                new ProducerRecord<>(props.getTopics().getSnapshots(), hubId, snapshot);
-
-        producer.send(record);
+        producer.send(new ProducerRecord<>(props.getTopics().getSnapshots(), hubId, snapshot));
     }
 
     public void shutdown() {

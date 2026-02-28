@@ -1,7 +1,10 @@
 server:
   port: 59091
+  address: 0.0.0.0
 
 spring:
+  main:
+    web-application-type: servlet
   application:
     name: aggregator
 
@@ -16,3 +19,7 @@ aggregator:
   topics:
     sensors: telemetry.sensors.v1
     snapshots: telemetry.snapshots.v1
+
+logging:
+  level:
+    root: INFO
