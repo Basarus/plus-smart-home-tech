@@ -10,6 +10,7 @@ import ru.yandex.practicum.telemetry.analyzer.processor.SnapshotProcessor;
 @SpringBootApplication
 @ConfigurationPropertiesScan
 public class AnalyzerApplication {
+
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(AnalyzerApplication.class, args);
 
