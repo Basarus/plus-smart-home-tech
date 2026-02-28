@@ -1,0 +1,21 @@
+spring:
+  main:
+    web-application-type: none
+  application:
+    name: aggregator
+
+aggregator:
+  kafka:
+    bootstrapServers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    groupId: telemetry.aggregator.v1
+    pollTimeoutMs: 1000
+    enableAutoCommit: false
+    autoOffsetReset: earliest
+    maxPollRecords: 100
+  topics:
+    sensors: telemetry.sensors.v1
+    snapshots: telemetry.snapshots.v1
+
+logging:
+  level:
+    root: INFO
