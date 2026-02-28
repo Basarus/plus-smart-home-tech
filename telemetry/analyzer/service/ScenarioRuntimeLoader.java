@@ -4,61 +4,68 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.telemetry.analyzer.model.Action;
+import ru.yandex.practicum.telemetry.analyzer.model.Condition;
 import ru.yandex.practicum.telemetry.analyzer.model.Scenario;
+import ru.yandex.practicum.telemetry.analyzer.model.ScenarioAction;
+import ru.yandex.practicum.telemetry.analyzer.model.ScenarioCondition;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Component
 public class ScenarioRuntimeLoader {
-    private static EntityManager em;
 
     @PersistenceContext
-    public void setEm(EntityManager em) {
-        ScenarioRuntimeLoader.em = em;
-    }
+    private EntityManager em;
 
     @Transactional(readOnly = true)
-    public static ScenarioRuntime loadScenarioRuntime(Scenario scenario) {
-        if (scenario == null || scenario.getId() == null) {
-            return null;
-        }
-
-        List<Object[]> condRows = em.createQuery("""
-                select sc.sensor.id, sc.condition.type, sc.condition.operation, sc.condition.value
-                from ScenarioCondition sc
-                where sc.scenario.id = :sid
-                """, Object[].class)
-                .setParameter("sid", scenario.getId())
+    public List<ScenarioRuntime> loadScenarioRuntime(String hubId) {
+        List<Scenario> scenarios = em.createQuery(
+                        "select s from Scenario s where s.hubId = :hubId",
+                        Scenario.class
+                )
+                .setParameter("hubId", hubId)
                 .getResultList();
 
-        List<Object[]> actRows = em.createQuery("""
-                select sa.sensor.id, sa.action.type, sa.action.value
-                from ScenarioAction sa
-                where sa.scenario.id = :sid
-                """, Object[].class)
-                .setParameter("sid", scenario.getId())
-                .getResultList();
+        return scenarios.stream()
+                .map(this::mapScenario)
+                .collect(Collectors.toList());
+    }
 
-        List<ScenarioRuntime.ConditionCheck> conditions = new ArrayList<>();
-        for (Object[] r : condRows) {
-            conditions.add(new ScenarioRuntime.ConditionCheck(
-                    String.valueOf(r[0]),
-                    r[1] == null ? null : String.valueOf(r[1]),
-                    r[2] == null ? null : String.valueOf(r[2]),
-                    (Integer) r[3]
-            ));
-        }
+    private ScenarioRuntime mapScenario(Scenario s) {
+        List<ScenarioConditionRuntime> conditions = s.getConditions().stream()
+                .map(this::mapCondition)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-        List<ScenarioRuntime.ActionCmd> actions = new ArrayList<>();
-        for (Object[] r : actRows) {
-            actions.add(new ScenarioRuntime.ActionCmd(
-                    String.valueOf(r[0]),
-                    r[1] == null ? null : String.valueOf(r[1]),
-                    (Integer) r[2]
-            ));
-        }
+        List<ScenarioActionRuntime> actions = s.getActions().stream()
+                .map(this::mapAction)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-        return new ScenarioRuntime(conditions, actions);
+        return new ScenarioRuntime(s.getHubId(), s.getName(), conditions, actions);
+    }
+
+    private ScenarioConditionRuntime mapCondition(ScenarioCondition sc) {
+        if (sc == null || sc.getSensor() == null || sc.getCondition() == null) return null;
+        Condition c = sc.getCondition();
+        return new ScenarioConditionRuntime(
+                sc.getSensor().getId(),
+                c.getType(),
+                c.getOperation(),
+                c.getValue()
+        );
+    }
+
+    private ScenarioActionRuntime mapAction(ScenarioAction sa) {
+        if (sa == null || sa.getSensor() == null || sa.getAction() == null) return null;
+        Action a = sa.getAction();
+        return new ScenarioActionRuntime(
+                sa.getSensor().getId(),
+                a.getType(),
+                a.getValue()
+        );
     }
 }

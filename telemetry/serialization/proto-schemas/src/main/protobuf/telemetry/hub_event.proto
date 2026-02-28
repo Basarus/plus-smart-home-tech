@@ -1,42 +1,23 @@
 syntax = "proto3";
 
-package telemetry.message.event;
-
-option java_multiple_files = true;
-option java_package = "ru.yandex.practicum.grpc.telemetry.event";
+package telemetry.messages;
 
 import "google/protobuf/timestamp.proto";
 
+option java_package = "ru.yandex.practicum.grpc.telemetry.message.event";
 option java_outer_classname = "HubEventProto";
 
-enum DeviceTypeProto {
-  MOTION_SENSOR = 0;
-  TEMPERATURE_SENSOR = 1;
-  LIGHT_SENSOR = 2;
-  CLIMATE_SENSOR = 3;
-  SWITCH_SENSOR = 4;
-}
+message HubEventProto {
+  string hub_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
 
-enum ConditionTypeProto {
-  MOTION = 0;
-  LUMINOSITY = 1;
-  SWITCH = 2;
-  TEMPERATURE = 3;
-  CO2LEVEL = 4;
-  HUMIDITY = 5;
-}
-
-enum ConditionOperationProto {
-  EQUALS = 0;
-  GREATER_THAN = 1;
-  LOWER_THAN = 2;
-}
-
-enum ActionTypeProto {
-  ACTIVATE = 0;
-  DEACTIVATE = 1;
-  INVERSE = 2;
-  SET_VALUE = 3;
+  oneof payload {
+    DeviceAddedEventProto device_added = 3;
+    DeviceRemovedEventProto device_removed = 4;
+    ScenarioAddedEventProto scenario_added = 5;
+    ScenarioRemovedEventProto scenario_removed = 6;
+    DeviceActionRequest device_action_request = 7;
+  }
 }
 
 message DeviceAddedEventProto {
@@ -48,50 +29,35 @@ message DeviceRemovedEventProto {
   string id = 1;
 }
 
-message ScenarioConditionProto {
-  string sensor_id = 1;
-  ConditionTypeProto type = 2;
-  ConditionOperationProto operation = 3;
-  int32 value = 4;
-}
-
-message DeviceActionProto {
-  string sensor_id = 1;
-  ActionTypeProto type = 2;
-  oneof value {
-    int32 int_value = 3;
-  }
-}
-
 message ScenarioAddedEventProto {
   string name = 1;
   repeated ScenarioConditionProto conditions = 2;
-  repeated DeviceActionProto actions = 3;
+  repeated ScenarioActionProto actions = 3;
 }
 
 message ScenarioRemovedEventProto {
   string name = 1;
 }
 
-message HubEventProto {
-  string hub_id = 1;
-  google.protobuf.Timestamp timestamp = 2;
+message ScenarioConditionProto {
+  string sensor_id = 1;
+  ConditionProto condition = 2;
+}
 
-  oneof payload {
-    DeviceAddedEventProto device_added = 3;
-    DeviceRemovedEventProto device_removed = 4;
-    ScenarioAddedEventProto scenario_added = 5;
-    ScenarioRemovedEventProto scenario_removed = 6;
-  }
+message ScenarioActionProto {
+  string sensor_id = 1;
+  DeviceActionProto action = 2;
+}
+
+message ConditionProto {
+  ConditionTypeProto type = 1;
+  ConditionOperationProto operation = 2;
+  int32 value = 3;
 }
 
 message DeviceActionProto {
-  string sensor_id = 1;
-  string type = 2;
-
-  oneof value {
-    int32 int_value = 3;
-  }
+  ActionTypeProto type = 1;
+  int32 value = 2;
 }
 
 message DeviceActionRequest {
@@ -99,4 +65,46 @@ message DeviceActionRequest {
   string scenario_name = 2;
   DeviceActionProto action = 3;
   google.protobuf.Timestamp timestamp = 4;
+}
+
+enum DeviceTypeProto {
+  DEVICE_TYPE_UNSPECIFIED = 0;
+  MOTION_SENSOR = 1;
+  TEMPERATURE_SENSOR = 2;
+  LIGHT_SENSOR = 3;
+  HUMIDITY_SENSOR = 4;
+  SWITCH_SENSOR = 5;
+  CO2_SENSOR = 6;
+  SMART_PLUG = 7;
+  LAMP = 8;
+  AIR_CONDITIONER = 9;
+  HEATER = 10;
+  HUMIDIFIER = 11;
+  VENTILATION = 12;
+}
+
+enum ConditionTypeProto {
+  CONDITION_TYPE_UNSPECIFIED = 0;
+  TEMPERATURE = 1;
+  HUMIDITY = 2;
+  ILLUMINATION = 3;
+  MOTION = 4;
+  SWITCH = 5;
+  CO2 = 6;
+}
+
+enum ConditionOperationProto {
+  OPERATION_UNSPECIFIED = 0;
+  EQUALS = 1;
+  GREATER_THAN = 2;
+  LOWER_THAN = 3;
+}
+
+enum ActionTypeProto {
+  ACTION_TYPE_UNSPECIFIED = 0;
+  ACTIVATE_TURN_ON = 1;
+  ACTIVATE_TURN_OFF = 2;
+  SET_TEMPERATURE = 3;
+  SET_BRIGHTNESS = 4;
+  SET_HUMIDITY = 5;
 }
