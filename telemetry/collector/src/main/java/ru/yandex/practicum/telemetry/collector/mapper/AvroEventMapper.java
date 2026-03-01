@@ -131,11 +131,11 @@ public class AvroEventMapper {
         if (s == null) throw new IllegalArgumentException("deviceType is null");
 
         return switch (s) {
+            case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
             case "MOTION_SENSOR" -> DeviceTypeAvro.MOTION_SENSOR;
             case "TEMPERATURE_SENSOR" -> DeviceTypeAvro.TEMPERATURE_SENSOR;
             case "LIGHT_SENSOR" -> DeviceTypeAvro.LIGHT_SENSOR;
             case "HUMIDITY_SENSOR" -> DeviceTypeAvro.HUMIDITY_SENSOR;
-            case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
             default -> throw new IllegalArgumentException("Unknown deviceType: " + s);
         };
     }
