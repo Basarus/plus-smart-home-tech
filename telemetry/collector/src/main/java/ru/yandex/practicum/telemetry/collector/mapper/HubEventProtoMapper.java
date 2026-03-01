@@ -49,7 +49,7 @@ public class HubEventProtoMapper {
         try {
             return DeviceTypeProto.valueOf(s);
         } catch (Exception ex) {
-            return DeviceTypeProto.DEVICE_TYPE_UNSPECIFIED;
+            throw new IllegalArgumentException("Unsupported device type");
         }
     }
 }

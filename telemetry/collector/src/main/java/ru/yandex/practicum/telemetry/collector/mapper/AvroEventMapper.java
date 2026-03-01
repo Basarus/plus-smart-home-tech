@@ -163,7 +163,28 @@ public class AvroEventMapper {
     }
 
     private Object mapConditionValue(ConditionProto cond) {
-        return cond.getValue();
+        try {
+            var m = cond.getClass().getMethod("getValue");
+            return m.invoke(cond);
+        } catch (NoSuchMethodException ignored) {
+            try {
+                var mCase = cond.getClass().getMethod("getValueCase");
+                Object valueCase = mCase.invoke(cond);
+                String name = String.valueOf(valueCase);
+
+                if ("INT_VALUE".equals(name)) {
+                    return cond.getClass().getMethod("getIntValue").invoke(cond);
+                }
+                if ("BOOL_VALUE".equals(name)) {
+                    return cond.getClass().getMethod("getBoolValue").invoke(cond);
+                }
+                return null;
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Unsupported ConditionProto value model: " + cond.getClass().getName(), e);
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to read ConditionProto value", e);
+        }
     }
 
     private List<DeviceActionAvro> mapActions(List<ScenarioActionProto> actions) {
