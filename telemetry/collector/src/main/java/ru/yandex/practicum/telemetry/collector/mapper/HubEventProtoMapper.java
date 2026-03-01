@@ -46,10 +46,24 @@ public class HubEventProtoMapper {
     }
 
     private DeviceTypeProto toDeviceType(String s) {
-        try {
-            return DeviceTypeProto.valueOf(s);
-        } catch (Exception ex) {
-            throw new IllegalArgumentException("Unsupported device type");
+        if (s == null || s.isBlank()) {
+            throw new IllegalArgumentException("Device type is null/blank");
         }
+
+        return switch (s) {
+            case "MOTION_SENSOR" -> DeviceTypeProto.MOTION_SENSOR;
+            case "TEMPERATURE_SENSOR" -> DeviceTypeProto.TEMPERATURE_SENSOR;
+            case "LIGHT_SENSOR" -> DeviceTypeProto.LIGHT_SENSOR;
+            case "HUMIDITY_SENSOR" -> DeviceTypeProto.HUMIDITY_SENSOR;
+            case "SWITCH_SENSOR" -> DeviceTypeProto.SWITCH_SENSOR;
+            case "CO2_SENSOR" -> DeviceTypeProto.CO2_SENSOR;
+            case "SMART_PLUG" -> DeviceTypeProto.SMART_PLUG;
+            case "LAMP" -> DeviceTypeProto.LAMP;
+            case "AIR_CONDITIONER" -> DeviceTypeProto.AIR_CONDITIONER;
+            case "HEATER" -> DeviceTypeProto.HEATER;
+            case "HUMIDIFIER" -> DeviceTypeProto.HUMIDIFIER;
+            case "VENTILATION" -> DeviceTypeProto.VENTILATION;
+            default -> throw new IllegalArgumentException("Unsupported device type: " + s);
+        };
     }
 }
