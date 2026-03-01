@@ -201,17 +201,13 @@ public class AvroEventMapper {
     }
 
     private DeviceTypeAvro mapDeviceType(DeviceTypeProto t) {
-        if (t == null || t == DeviceTypeProto.UNRECOGNIZED) {
-            throw new IllegalArgumentException("Unsupported device type: " + t);
-        }
-
-        return switch (t) {
+            return switch (t) {
             case TEMPERATURE_SENSOR -> DeviceTypeAvro.TEMPERATURE_SENSOR;
             case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
             case LIGHT_SENSOR -> DeviceTypeAvro.LIGHT_SENSOR;
             case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
             case CLIMATE_SENSOR -> DeviceTypeAvro.CLIMATE_SENSOR;
-            default -> throw new IllegalArgumentException("Unsupported device type for Avro: " + t);
+            case UNRECOGNIZED -> null;
         };
     }
 
@@ -258,10 +254,6 @@ public class AvroEventMapper {
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
-        if (t == null || t == ActionTypeProto.UNRECOGNIZED) {
-            return null;
-        }
-
         return switch (t) {
             case ACTIVATE -> ActionTypeAvro.ACTIVATE;
             case DEACTIVATE -> ActionTypeAvro.DEACTIVATE;
