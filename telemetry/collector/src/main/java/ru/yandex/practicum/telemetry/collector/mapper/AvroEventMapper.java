@@ -217,7 +217,7 @@ public class AvroEventMapper {
     }
 
     private DeviceTypeAvro mapDeviceType(String s) {
-        if (s == null || s.isBlank()) throw new IllegalArgumentException("deviceType is null/blank");
+        if (s == null || s.isBlank()) return null;
 
         return switch (s) {
             case "TEMPERATURE_SENSOR" -> DeviceTypeAvro.TEMPERATURE_SENSOR;
@@ -259,13 +259,14 @@ public class AvroEventMapper {
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
         if (t == null || t == ActionTypeProto.UNRECOGNIZED) {
-            throw new IllegalArgumentException("Unsupported action type: " + t);
+            return null;
         }
 
         return switch (t) {
             case ACTIVATE -> ActionTypeAvro.ACTIVATE;
             case DEACTIVATE -> ActionTypeAvro.DEACTIVATE;
             case INVERSE -> ActionTypeAvro.INVERSE;
+            case SET_VALUE -> ActionTypeAvro.SET_VALUE;
             case UNRECOGNIZED -> null;
         };
     }
