@@ -1,12 +1,29 @@
-package ru.yandex.practicum.telemetry.collector.service;
+package ru.yandex.practicum.telemetry.collector.mapper;
 
+import com.google.protobuf.Timestamp;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto;
-import ru.yandex.practicum.telemetry.collector.api.dto.*;
+import ru.yandex.practicum.grpc.telemetry.message.event.ActionTypeProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.ConditionOperationProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.ConditionProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.ConditionTypeProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.DeviceActionProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.DeviceAddedEventProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.DeviceRemovedEventProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.DeviceTypeProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioActionProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioAddedEventProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioConditionProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioRemovedEventProto;
+import ru.yandex.practicum.telemetry.collector.api.dto.DeviceActionDto;
+import ru.yandex.practicum.telemetry.collector.api.dto.DeviceAddedEventDto;
+import ru.yandex.practicum.telemetry.collector.api.dto.DeviceRemovedEventDto;
+import ru.yandex.practicum.telemetry.collector.api.dto.HubEventDto;
+import ru.yandex.practicum.telemetry.collector.api.dto.ScenarioAddedEventDto;
+import ru.yandex.practicum.telemetry.collector.api.dto.ScenarioConditionDto;
+import ru.yandex.practicum.telemetry.collector.api.dto.ScenarioRemovedEventDto;
 
 import java.time.Instant;
-
-import static ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto.*;
 
 @Component
 public class HubEventProtoMapper {
@@ -70,8 +87,8 @@ public class HubEventProtoMapper {
         throw new IllegalArgumentException("Unsupported hub event: " + dto.getClass().getName());
     }
 
-    private com.google.protobuf.Timestamp toProtoTs(Instant instant) {
-        return com.google.protobuf.Timestamp.newBuilder()
+    private Timestamp toProtoTs(Instant instant) {
+        return Timestamp.newBuilder()
                 .setSeconds(instant.getEpochSecond())
                 .setNanos(instant.getNano())
                 .build();
