@@ -183,7 +183,7 @@ public class AvroEventMapper {
             case TEMPERATURE -> ConditionTypeAvro.TEMPERATURE;
             case HUMIDITY -> ConditionTypeAvro.HUMIDITY;
             case ILLUMINATION -> ConditionTypeAvro.LIGHT;
-            case SWITCH -> ConditionTypeAvro.MOTION;
+            case SWITCH -> ConditionTypeAvro.SWITCH;
             default -> throw new IllegalArgumentException("Unsupported condition type: " + t);
         };
     }
