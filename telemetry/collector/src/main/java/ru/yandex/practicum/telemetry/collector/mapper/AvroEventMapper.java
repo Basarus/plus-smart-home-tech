@@ -56,7 +56,6 @@ public class AvroEventMapper {
                 TemperatureSensorAvro a = new TemperatureSensorAvro();
                 a.setTemperatureC(p.getTemperatureC());
                 a.setTemperatureF(p.getTemperatureF());
-                a.setLinkQuality(p.getLinkQuality());
                 yield a;
             }
             case LIGHT_SENSOR -> {
@@ -72,14 +71,12 @@ public class AvroEventMapper {
                 a.setTemperatureC(p.getTemperatureC());
                 a.setHumidity(p.getHumidity());
                 a.setCo2Level(p.getCo2Level());
-                a.setLinkQuality(p.getLinkQuality());
                 yield a;
             }
             case SWITCH_SENSOR -> {
                 var p = request.getSwitchSensor();
                 SwitchSensorAvro a = new SwitchSensorAvro();
                 a.setState(p.getState());
-                a.setLinkQuality(p.getLinkQuality());
                 yield a;
             }
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
@@ -368,7 +365,6 @@ public class AvroEventMapper {
         TemperatureSensorAvro a = new TemperatureSensorAvro();
         a.setTemperatureC(e.temperatureC());
         a.setTemperatureF(e.temperatureF());
-        a.setLinkQuality(0);
         return a;
     }
 
@@ -384,14 +380,12 @@ public class AvroEventMapper {
         a.setTemperatureC(e.temperatureC());
         a.setHumidity(e.humidity());
         a.setCo2Level(e.co2Level());
-        a.setLinkQuality(0);
         return a;
     }
 
     private SwitchSensorAvro sw(SwitchSensorEventDto e) {
         SwitchSensorAvro a = new SwitchSensorAvro();
         a.setState(e.state());
-        a.setLinkQuality(0);
         return a;
     }
 }
