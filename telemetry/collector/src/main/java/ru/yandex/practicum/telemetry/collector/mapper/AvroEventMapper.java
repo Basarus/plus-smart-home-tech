@@ -49,7 +49,6 @@ public class AvroEventMapper {
                 a.setLinkQuality(p.getLinkQuality());
                 a.setMotion(p.getMotion());
                 a.setVoltage(p.getVoltage());
-                log.debug("MotionSensor: linkQuality={}, motion={}, voltage={}", p.getLinkQuality(), p.getMotion(), p.getVoltage());
                 yield a;
             }
             case TEMPERATURE_SENSOR -> {
@@ -58,7 +57,6 @@ public class AvroEventMapper {
                 a.setTemperatureC(p.getTemperatureC());
                 a.setTemperatureF(p.getTemperatureF());
                 a.setLinkQuality(p.getLinkQuality());
-                log.debug("TemperatureSensor: temperatureC={}, temperatureF={}, linkQuality={}", p.getTemperatureC(), p.getTemperatureF(), p.getLinkQuality());
                 yield a;
             }
             case LIGHT_SENSOR -> {
@@ -66,7 +64,6 @@ public class AvroEventMapper {
                 LightSensorAvro a = new LightSensorAvro();
                 a.setLinkQuality(p.getLinkQuality());
                 a.setLuminosity(p.getLuminosity());
-                log.debug("LightSensor: linkQuality={}, luminosity={}", p.getLinkQuality(), p.getLuminosity());
                 yield a;
             }
             case CLIMATE_SENSOR -> {
@@ -76,7 +73,6 @@ public class AvroEventMapper {
                 a.setHumidity(p.getHumidity());
                 a.setCo2Level(p.getCo2Level());
                 a.setLinkQuality(p.getLinkQuality());
-                log.debug("ClimateSensor: temperatureC={}, humidity={}, co2={}, linkQuality={}", p.getTemperatureC(), p.getHumidity(), p.getCo2Level(), p.getLinkQuality());
                 yield a;
             }
             case SWITCH_SENSOR -> {
@@ -84,7 +80,6 @@ public class AvroEventMapper {
                 SwitchSensorAvro a = new SwitchSensorAvro();
                 a.setState(p.getState());
                 a.setLinkQuality(p.getLinkQuality());
-                log.debug("SwitchSensor: state={}, linkQuality={}", p.getState(), p.getLinkQuality());
                 yield a;
             }
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
@@ -366,7 +361,6 @@ public class AvroEventMapper {
         a.setLinkQuality(e.linkQuality());
         a.setMotion(e.motion());
         a.setVoltage(e.voltage());
-        log.debug("MotionSensorDto mapped: linkQuality={}, motion={}, voltage={}", e.linkQuality(), e.motion(), e.voltage());
         return a;
     }
 
@@ -375,7 +369,6 @@ public class AvroEventMapper {
         a.setTemperatureC(e.temperatureC());
         a.setTemperatureF(e.temperatureF());
         a.setLinkQuality(0);
-        log.debug("TemperatureSensorDto mapped: temperatureC={}, temperatureF={}", e.temperatureC(), e.temperatureF());
         return a;
     }
 
@@ -383,7 +376,6 @@ public class AvroEventMapper {
         LightSensorAvro a = new LightSensorAvro();
         a.setLinkQuality(e.linkQuality());
         a.setLuminosity(e.luminosity());
-        log.debug("LightSensorDto mapped: linkQuality={}, luminosity={}", e.linkQuality(), e.luminosity());
         return a;
     }
 
@@ -393,7 +385,6 @@ public class AvroEventMapper {
         a.setHumidity(e.humidity());
         a.setCo2Level(e.co2Level());
         a.setLinkQuality(0);
-        log.debug("ClimateSensorDto mapped: temperatureC={}, humidity={}, co2Level={}", e.temperatureC(), e.humidity(), e.co2Level());
         return a;
     }
 
@@ -401,7 +392,6 @@ public class AvroEventMapper {
         SwitchSensorAvro a = new SwitchSensorAvro();
         a.setState(e.state());
         a.setLinkQuality(0);
-        log.debug("SwitchSensorDto mapped: state={}", e.state());
         return a;
     }
 }
