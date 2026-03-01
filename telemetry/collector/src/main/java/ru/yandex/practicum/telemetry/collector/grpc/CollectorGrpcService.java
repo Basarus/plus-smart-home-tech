@@ -137,6 +137,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
     private HubMapping toHubDtoAndPayloadBytes(HubEventProto event) {
         Instant ts = toInstant(event.getTimestamp());
         String hubId = event.getHubId();
+        byte[] payload = event.toByteArray();
 
         return switch (event.getPayloadCase()) {
             case DEVICE_ADDED -> {
@@ -146,7 +147,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         ts,
                         p.getId(),
                         p.getType().name());
-                yield new HubMapping(dto, p.toByteArray());
+                yield new HubMapping(dto, payload);
             }
             case DEVICE_REMOVED -> {
                 var p = event.getDeviceRemoved();
@@ -154,7 +155,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         hubId,
                         ts,
                         p.getId());
-                yield new HubMapping(dto, p.toByteArray());
+                yield new HubMapping(dto, payload);
             }
             case SCENARIO_ADDED -> {
                 var p = event.getScenarioAdded();
@@ -180,7 +181,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         p.getName(),
                         conditions,
                         actions);
-                yield new HubMapping(dto, p.toByteArray());
+                yield new HubMapping(dto, payload);
             }
             case SCENARIO_REMOVED -> {
                 var p = event.getScenarioRemoved();
@@ -188,7 +189,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         hubId,
                         ts,
                         p.getName());
-                yield new HubMapping(dto, p.toByteArray());
+                yield new HubMapping(dto, payload);
             }
             case DEVICE_ACTION_REQUEST ->
                 throw new IllegalArgumentException("Unsupported hub event payload: DEVICE_ACTION_REQUEST");
