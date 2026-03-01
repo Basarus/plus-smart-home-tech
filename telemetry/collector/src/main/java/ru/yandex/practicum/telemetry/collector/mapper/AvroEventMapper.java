@@ -10,6 +10,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ru.yandex.practicum.kafka.telemetry.event.ActionTypeAvro.*;
+
 @Component
 public class AvroEventMapper {
 
@@ -153,31 +155,31 @@ public class AvroEventMapper {
             ConditionProto cond = c.getCondition();
             a.setType(mapConditionType(cond.getType()));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            a.setValue(cond.getValue());
+            a.setValue(mapConditionValue(cond));
 
             out.add(a);
         }
         return out;
     }
 
+    private Object mapConditionValue(ConditionProto cond) {
+        return cond.getValue();
+    }
+
     private List<DeviceActionAvro> mapActions(List<ScenarioActionProto> actions) {
         List<DeviceActionAvro> out = new ArrayList<>(actions.size());
+
         for (ScenarioActionProto act : actions) {
             DeviceActionAvro a = new DeviceActionAvro();
             a.setSensorId(act.getSensorId());
 
             DeviceActionProto proto = act.getAction();
-            ActionTypeAvro type = mapActionType(proto.getType());
-            a.setType(type);
-
-            if (type == ActionTypeAvro.SET_VALUE) {
-                a.setValue(proto.getValue());
-            } else {
-                a.setValue(null);
-            }
+            a.setType(mapActionType(proto.getType()));
+            a.setValue(proto.getValue());
 
             out.add(a);
         }
+
         return out;
     }
 
@@ -187,8 +189,8 @@ public class AvroEventMapper {
             case TEMPERATURE -> ConditionTypeAvro.TEMPERATURE;
             case HUMIDITY -> ConditionTypeAvro.HUMIDITY;
             case ILLUMINATION -> ConditionTypeAvro.LIGHT;
-            case CONDITION_TYPE_UNSPECIFIED, SWITCH, CO2, UNRECOGNIZED ->
-                    throw new IllegalArgumentException("Unsupported conditionType for avro: " + t);
+            case UNRECOGNIZED -> throw new IllegalArgumentException("Unknown conditionType: " + t);
+            default -> throw new IllegalArgumentException("Unsupported conditionType for avro: " + t);
         };
     }
 
@@ -197,18 +199,18 @@ public class AvroEventMapper {
             case LOWER_THAN -> ConditionOperationAvro.LOWER_THAN;
             case GREATER_THAN -> ConditionOperationAvro.GREATER_THAN;
             case EQUALS -> ConditionOperationAvro.EQUALS;
-            case OPERATION_UNSPECIFIED, UNRECOGNIZED ->
-                    throw new IllegalArgumentException("Unknown conditionOperation: " + op);
+            case UNRECOGNIZED -> throw new IllegalArgumentException("Unknown conditionOperation: " + op);
+            default -> throw new IllegalArgumentException("Unsupported conditionOperation for avro: " + op);
         };
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
         return switch (t) {
-            case ACTIVATE_TURN_ON -> ActionTypeAvro.TURN_ON;
-            case ACTIVATE_TURN_OFF -> ActionTypeAvro.TURN_OFF;
-            case SET_TEMPERATURE, SET_BRIGHTNESS, SET_HUMIDITY -> ActionTypeAvro.SET_VALUE;
-            case ACTION_TYPE_UNSPECIFIED, UNRECOGNIZED ->
-                    throw new IllegalArgumentException("Unknown actionType: " + t);
+            case ACTIVATE -> ACTIVATE;
+            case DEACTIVATE -> DEACTIVATE;
+            case INVERSE -> INVERSE;
+            case UNRECOGNIZED -> throw new IllegalArgumentException("Unknown actionType: " + t);
+            default -> throw new IllegalArgumentException("Unsupported actionType for avro: " + t);
         };
     }
 
