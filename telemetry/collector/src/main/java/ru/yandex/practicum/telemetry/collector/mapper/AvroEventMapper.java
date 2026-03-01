@@ -153,11 +153,10 @@ public class AvroEventMapper {
             a.setOperation(mapConditionOperation(cond.getOperation()));
 
             int value = switch (cond.getValueCase()) {
-                case INT_VALUE -> cond.getIntValue();
+                case INT_VALUE -> mapConditionValue(cond.getType(), cond.getIntValue());
                 case BOOL_VALUE -> cond.getBoolValue() ? 1 : 0;
                 case VALUE_NOT_SET -> 0;
             };
-
             a.setValue(value);
             out.add(a);
         }
@@ -204,7 +203,10 @@ public class AvroEventMapper {
     }
 
     private int mapConditionValue(ConditionTypeProto type, int value) {
-        return value;
+        return switch (type) {
+            case MOTION, SWITCH -> value != 0 ? 1 : 0;
+            default -> value;
+        };
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
