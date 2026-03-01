@@ -113,13 +113,18 @@ public class AvroEventMapper {
     }
 
     private DeviceTypeAvro mapDeviceType(DeviceTypeProto t) {
+        if (t == null || t == DeviceTypeProto.UNRECOGNIZED) {
+            throw new IllegalArgumentException("Unsupported device type: " + t);
+        }
+
         return switch (t) {
             case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
             case TEMPERATURE_SENSOR -> DeviceTypeAvro.TEMPERATURE_SENSOR;
             case LIGHT_SENSOR -> DeviceTypeAvro.LIGHT_SENSOR;
-            case HUMIDITY_SENSOR -> DeviceTypeAvro.HUMIDITY_SENSOR;
             case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
-            default -> throw new IllegalArgumentException("Unsupported device type: " + t);
+            case HUMIDITY_SENSOR -> DeviceTypeAvro.CLIMATE_SENSOR;
+
+            default -> throw new IllegalArgumentException("Unsupported device type for Avro: " + t);
         };
     }
 
@@ -130,9 +135,11 @@ public class AvroEventMapper {
             case "MOTION_SENSOR" -> DeviceTypeAvro.MOTION_SENSOR;
             case "TEMPERATURE_SENSOR" -> DeviceTypeAvro.TEMPERATURE_SENSOR;
             case "LIGHT_SENSOR" -> DeviceTypeAvro.LIGHT_SENSOR;
-            case "HUMIDITY_SENSOR" -> DeviceTypeAvro.HUMIDITY_SENSOR;
             case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
-            default -> throw new IllegalArgumentException("Unsupported deviceType: " + s);
+
+            case "HUMIDITY_SENSOR", "CO2_SENSOR", "CLIMATE_SENSOR" -> DeviceTypeAvro.CLIMATE_SENSOR;
+
+            default -> throw new IllegalArgumentException("Unsupported device type: " + s);
         };
     }
 
@@ -145,7 +152,7 @@ public class AvroEventMapper {
             ConditionProto cond = c.getCondition();
             a.setType(mapConditionType(cond.getType()));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            a.setValue(mapConditionValue(cond.getType(), cond.getValue()));
+            a.setValue(mapConditionValue(cond.getType(), cond.getIntValue()));
 
             out.add(a);
         }
@@ -162,10 +169,7 @@ public class AvroEventMapper {
             ActionTypeAvro type = mapActionType(proto.getType());
             a.setType(type);
 
-            int value = 0;
-            if (type == ActionTypeAvro.SET_VALUE) {
-                value = proto.getValue();
-            }
+            int value = proto.getValue();
             a.setValue(value);
 
             out.add(a);
@@ -201,10 +205,14 @@ public class AvroEventMapper {
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
+        if (t == null || t == ActionTypeProto.UNRECOGNIZED) {
+            throw new IllegalArgumentException("Unsupported action type: " + t);
+        }
+
         return switch (t) {
-            case ACTIVATE_TURN_ON -> ActionTypeAvro.TURN_ON;
-            case ACTIVATE_TURN_OFF -> ActionTypeAvro.TURN_OFF;
-            case SET_TEMPERATURE, SET_BRIGHTNESS, SET_HUMIDITY -> ActionTypeAvro.SET_VALUE;
+            case ACTIVATE -> ActionTypeAvro.ACTIVATE;
+            case DEACTIVATE -> ActionTypeAvro.DEACTIVATE;
+            case INVERSE -> ActionTypeAvro.INVERSE;
             default -> throw new IllegalArgumentException("Unsupported action type: " + t);
         };
     }
