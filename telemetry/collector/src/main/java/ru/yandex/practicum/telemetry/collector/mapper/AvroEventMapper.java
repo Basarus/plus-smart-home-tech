@@ -38,6 +38,10 @@ public class AvroEventMapper {
         avro.setHubId(request.getHubId());
         avro.setTimestamp(toInstant(request.getTimestamp()));
 
+        log.info("HubEvent payloadCase={}, hubId={}, ts={}",
+                request.getPayloadCase(), request.getHubId(), request.getTimestamp());
+        log.info("Mapped HubEventAvro={}", avro);
+
         switch (request.getPayloadCase()) {
             case DEVICE_ADDED -> {
                 var p = request.getDeviceAdded();
@@ -68,10 +72,6 @@ public class AvroEventMapper {
             }
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Hub payload is not set");
         }
-
-        log.info("HubEvent payloadCase={}, hubId={}, ts={}",
-                request.getPayloadCase(), request.getHubId(), request.getTimestamp());
-        log.info("Mapped HubEventAvro={}", avro);
 
         return avro;
     }
