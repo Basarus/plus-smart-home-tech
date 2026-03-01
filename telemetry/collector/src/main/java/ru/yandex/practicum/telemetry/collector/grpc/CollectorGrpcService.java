@@ -51,10 +51,10 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
             responseObserver.onNext(Empty.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (Exception e) {
-            e.printStackTrace();
             responseObserver.onError(
-                    Status.INTERNAL
-                            .withDescription("Failed to handle hub event: " + e)
+                    Status.INVALID_ARGUMENT
+                            .withDescription("Failed to handle hub event: " + e.getMessage())
+                            .withCause(e)
                             .asRuntimeException()
             );
         }

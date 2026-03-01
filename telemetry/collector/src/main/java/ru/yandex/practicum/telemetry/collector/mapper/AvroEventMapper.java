@@ -1,5 +1,6 @@
 package ru.yandex.practicum.telemetry.collector.mapper;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.message.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@Slf4j
 public class AvroEventMapper {
 
     public SensorEventAvro toAvro(SensorEventDto dto) {
@@ -66,6 +68,10 @@ public class AvroEventMapper {
             }
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Hub payload is not set");
         }
+
+        log.info("HubEvent payloadCase={}, hubId={}, ts={}",
+                request.getPayloadCase(), request.getHubId(), request.getTimestamp());
+        log.info("Mapped HubEventAvro={}", avro);
 
         return avro;
     }
