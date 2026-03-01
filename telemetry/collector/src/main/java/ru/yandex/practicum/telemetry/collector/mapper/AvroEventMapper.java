@@ -118,8 +118,8 @@ public class AvroEventMapper {
         }
 
         return switch (t) {
-            case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
             case TEMPERATURE_SENSOR -> DeviceTypeAvro.TEMPERATURE_SENSOR;
+            case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
             case LIGHT_SENSOR -> DeviceTypeAvro.LIGHT_SENSOR;
             case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
             case HUMIDITY_SENSOR -> DeviceTypeAvro.CLIMATE_SENSOR;
@@ -135,44 +135,51 @@ public class AvroEventMapper {
             case "TEMPERATURE_SENSOR" -> DeviceTypeAvro.TEMPERATURE_SENSOR;
             case "LIGHT_SENSOR" -> DeviceTypeAvro.LIGHT_SENSOR;
             case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
-
             case "HUMIDITY_SENSOR", "CO2_SENSOR", "CLIMATE_SENSOR" -> DeviceTypeAvro.CLIMATE_SENSOR;
-
             default -> throw new IllegalArgumentException("Unsupported device type: " + s);
         };
     }
 
     private List<ScenarioConditionAvro> mapConditions(List<ScenarioConditionProto> conditions) {
         List<ScenarioConditionAvro> out = new ArrayList<>(conditions.size());
+
         for (ScenarioConditionProto c : conditions) {
             ScenarioConditionAvro a = new ScenarioConditionAvro();
             a.setSensorId(c.getSensorId());
 
             ConditionProto cond = c.getCondition();
+
             a.setType(mapConditionType(cond.getType()));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            a.setValue(mapConditionValue(cond.getType(), cond.getIntValue()));
 
+            int value = switch (cond.getValueCase()) {
+                case INT_VALUE -> cond.getIntValue();
+                case BOOL_VALUE -> cond.getBoolValue() ? 1 : 0;
+                case VALUE_NOT_SET -> 0;
+            };
+
+            a.setValue(value);
             out.add(a);
         }
+
         return out;
     }
 
     private List<DeviceActionAvro> mapActions(List<ScenarioActionProto> actions) {
         List<DeviceActionAvro> out = new ArrayList<>(actions.size());
+
         for (ScenarioActionProto act : actions) {
             DeviceActionAvro a = new DeviceActionAvro();
             a.setSensorId(act.getSensorId());
 
             DeviceActionProto proto = act.getAction();
-            ActionTypeAvro type = mapActionType(proto.getType());
-            a.setType(type);
+            a.setType(mapActionType(proto.getType()));
 
-            int value = proto.getValue();
-            a.setValue(value);
+            a.setValue(proto.getValue());
 
             out.add(a);
         }
+
         return out;
     }
 
@@ -195,10 +202,7 @@ public class AvroEventMapper {
     }
 
     private int mapConditionValue(ConditionTypeProto type, int value) {
-        return switch (type) {
-            case MOTION, SWITCH -> value != 0 ? 1 : 0;
-            default -> value;
-        };
+        return value;
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
