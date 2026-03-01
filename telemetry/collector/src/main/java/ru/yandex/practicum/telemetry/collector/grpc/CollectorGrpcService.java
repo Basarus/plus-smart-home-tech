@@ -73,7 +73,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                 a.setState(p.getSwitchSensor().getState());
                 yield a;
             }
-            default -> throw new IllegalArgumentException("Unsupported payload: " + p.getPayloadCase());
+            case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
         };
 
         avro.setPayload(payload);
@@ -84,7 +84,17 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(p.getHubId());
         avro.setTimestamp(toInstant(p.getTimestamp()));
-        avro.setPayload(ByteBuffer.wrap(p.toByteArray()));
+
+        byte[] payloadBytes = switch (p.getPayloadCase()) {
+            case DEVICE_ADDED -> p.getDeviceAdded().toByteArray();
+            case DEVICE_REMOVED -> p.getDeviceRemoved().toByteArray();
+            case SCENARIO_ADDED -> p.getScenarioAdded().toByteArray();
+            case SCENARIO_REMOVED -> p.getScenarioRemoved().toByteArray();
+            case DEVICE_ACTION_REQUEST -> p.getDeviceActionRequest().toByteArray();
+            case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Hub payload is not set");
+        };
+
+        avro.setPayload(ByteBuffer.wrap(payloadBytes));
         return avro;
     }
 
