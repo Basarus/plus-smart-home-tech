@@ -183,9 +183,6 @@ public class AvroEventMapper {
 
     private List<ScenarioConditionAvro> mapConditions(List<ScenarioConditionProto> conditions) {
         List<ScenarioConditionProto> sorted = new ArrayList<>(conditions);
-        sorted.sort(
-                Comparator.comparingInt((ScenarioConditionProto c) -> c.getValueCase() == ScenarioConditionProto.ValueCase.BOOL_VALUE ? 1 : 0)
-        );
 
         List<ScenarioConditionAvro> out = new ArrayList<>(sorted.size());
         for (ScenarioConditionProto c : sorted) {
