@@ -73,7 +73,14 @@ public class TelemetryProducer {
     }
 
     private byte[] serialize(HubEventAvro event) {
-        return serializeInternal(event, new SpecificDatumWriter<>(HubEventAvro.class));
+        try {
+            var bb = HubEventAvro.getEncoder().encode(event);
+            byte[] out = new byte[bb.remaining()];
+            bb.get(out);
+            return out;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private <T> byte[] serializeInternal(T event, SpecificDatumWriter<T> writer) {
