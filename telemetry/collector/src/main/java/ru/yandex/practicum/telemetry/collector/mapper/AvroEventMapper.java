@@ -122,7 +122,7 @@ public class AvroEventMapper {
             case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
             case LIGHT_SENSOR -> DeviceTypeAvro.LIGHT_SENSOR;
             case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
-            case HUMIDITY_SENSOR -> DeviceTypeAvro.CLIMATE_SENSOR;
+            case CLIMATE_SENSOR -> DeviceTypeAvro.CLIMATE_SENSOR;
             default -> throw new IllegalArgumentException("Unsupported device type for Avro: " + t);
         };
     }
@@ -135,7 +135,7 @@ public class AvroEventMapper {
             case "MOTION_SENSOR" -> DeviceTypeAvro.MOTION_SENSOR;
             case "LIGHT_SENSOR" -> DeviceTypeAvro.LIGHT_SENSOR;
             case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
-            case "HUMIDITY_SENSOR", "CO2_SENSOR", "CLIMATE_SENSOR" -> DeviceTypeAvro.CLIMATE_SENSOR;
+            case "CLIMATE_SENSOR" -> DeviceTypeAvro.CLIMATE_SENSOR;
             default -> throw new IllegalArgumentException("Unsupported device type: " + s);
         };
     }
