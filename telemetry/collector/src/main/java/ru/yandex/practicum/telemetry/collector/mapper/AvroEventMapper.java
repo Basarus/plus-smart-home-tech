@@ -8,6 +8,7 @@ import ru.yandex.practicum.telemetry.collector.api.dto.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Component
@@ -181,9 +182,13 @@ public class AvroEventMapper {
     }
 
     private List<ScenarioConditionAvro> mapConditions(List<ScenarioConditionProto> conditions) {
-        List<ScenarioConditionAvro> out = new ArrayList<>(conditions.size());
+        List<ScenarioConditionProto> sorted = new ArrayList<>(conditions);
+        sorted.sort(
+                Comparator.comparingInt((ScenarioConditionProto c) -> c.getValueCase() == ScenarioConditionProto.ValueCase.BOOL_VALUE ? 1 : 0)
+        );
 
-        for (ScenarioConditionProto c : conditions) {
+        List<ScenarioConditionAvro> out = new ArrayList<>(sorted.size());
+        for (ScenarioConditionProto c : sorted) {
             ScenarioConditionAvro a = new ScenarioConditionAvro();
             a.setSensorId(c.getSensorId());
             a.setType(mapConditionType(c.getType()));
@@ -296,6 +301,10 @@ public class AvroEventMapper {
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
+        if (t == null || t == ActionTypeProto.UNRECOGNIZED) {
+            return null;
+        }
+
         return switch (t) {
             case ACTIVATE -> ActionTypeAvro.ACTIVATE;
             case DEACTIVATE -> ActionTypeAvro.DEACTIVATE;
