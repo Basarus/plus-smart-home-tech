@@ -11,8 +11,6 @@ import ru.yandex.practicum.telemetry.collector.kafka.TelemetryProducer;
 import ru.yandex.practicum.telemetry.collector.mapper.AvroEventMapper;
 import ru.yandex.practicum.telemetry.collector.mapper.HubEventProtoMapper;
 
-import java.time.Instant;
-
 @Service
 @RequiredArgsConstructor
 public class CollectorService {
@@ -28,12 +26,7 @@ public class CollectorService {
 
     public void collectHubEvent(HubEventDto dto) {
         HubEventProto proto = hubEventProtoMapper.toProto(dto);
-
-        Instant ts = Instant.ofEpochSecond(
-                proto.getTimestamp().getSeconds(),
-                proto.getTimestamp().getNanos());
-
-        HubEventAvro avro = mapper.toHubEventAvro(proto.getHubId(), ts, proto.toByteArray());
+        HubEventAvro avro = mapper.toHubEventAvro(dto.getHubId(), dto.getTimestamp(), proto.toByteArray());
         producer.sendHubEvent(avro);
     }
 }
