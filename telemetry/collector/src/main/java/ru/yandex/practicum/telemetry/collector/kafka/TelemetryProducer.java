@@ -32,12 +32,14 @@ public class TelemetryProducer {
         String key = event.getHubId();
         Long timestamp = toKafkaTimestamp(event.getTimestamp());
         producer.send(new ProducerRecord<>(topics.sensors(), null, timestamp, key, serialize(event)));
+        producer.flush();
     }
 
     public void sendHubEvent(HubEventAvro event) {
         String key = event.getHubId();
         Long timestamp = toKafkaTimestamp(event.getTimestamp());
         producer.send(new ProducerRecord<>(topics.hubs(), null, timestamp, key, serialize(event)));
+        producer.flush();
     }
 
     private Properties producerProps(KafkaProps props) {
