@@ -1,3 +1,8 @@
+app:
+  kafka:
+    topics:
+      hubs: telemetry.hubs.v1
+
 server:
   port: 0
 

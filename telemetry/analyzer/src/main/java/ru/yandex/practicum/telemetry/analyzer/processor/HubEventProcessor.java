@@ -1,61 +1,69 @@
-package ru.yandex.practicum.telemetry.analyzer.processor;
+package ru.yandex.practicum.telemetry.analyzer.kafka;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
-import ru.yandex.practicum.telemetry.analyzer.config.AnalyzerKafkaProperties;
+import ru.yandex.practicum.telemetry.analyzer.serialization.AvroDeserializer;
 import ru.yandex.practicum.telemetry.analyzer.service.HubEventService;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
+@RequiredArgsConstructor
 public class HubEventProcessor implements Runnable {
 
-    private final KafkaConsumer<String, byte[]> consumer;
-    private final AnalyzerKafkaProperties props;
+    private final org.apache.kafka.clients.consumer.KafkaConsumer<String, byte[]> consumer;
     private final HubEventService hubEventService;
-    private final AtomicBoolean running = new AtomicBoolean(true);
+    private final AvroDeserializer avroDeserializer;
 
-    public HubEventProcessor(@Qualifier("hubEventsConsumer") KafkaConsumer<String, byte[]> consumer, AnalyzerKafkaProperties props, HubEventService hubEventService) {
-        this.consumer = consumer;
-        this.props = props;
-        this.hubEventService = hubEventService;
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    @Value("${app.kafka.topics.hubs}")
+    private String hubsTopic;
+
+    @Value("${app.kafka.poll-timeout-ms:500}")
+    private long pollTimeoutMs;
+
+    private final AtomicBoolean running = new AtomicBoolean(true);
+    private Thread worker;
+
+    @PostConstruct
+    public void start() {
+        worker = new Thread(this, "hub-event-processor");
+        worker.start();
+    }
+
+    @PreDestroy
+    public void stop() {
+        running.set(false);
+        consumer.wakeup();
     }
 
     @Override
     public void run() {
-        consumer.subscribe(List.of(props.topics().hubs()));
+        consumer.subscribe(List.of(hubsTopic));
+
         try {
             while (running.get()) {
-                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(props.consumers().hubEvents().pollTimeoutMs()));
+                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(pollTimeoutMs));
 
-                for (var r : records) {
+                records.forEach(r -> {
                     HubEventAvro event = avroDeserializer.deserialize(r.value(), HubEventAvro.class);
-                    if (event != null) {
-                        hubEventService.handle(event);
-                    }
-                }
+                    hubEventService.handle(event);
+                });
 
                 consumer.commitSync();
             }
         } catch (WakeupException e) {
             if (running.get()) throw e;
         } finally {
-            try {
-                consumer.close();
-            } catch (Exception ignored) {
-            }
+            consumer.close();
         }
-    }
-
-    public void shutdown() {
-        running.set(false);
-        consumer.wakeup();
     }
 }
