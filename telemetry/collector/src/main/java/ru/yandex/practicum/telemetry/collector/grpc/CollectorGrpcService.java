@@ -3,8 +3,7 @@ package ru.yandex.practicum.telemetry.collector.grpc;
 import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import net.devh.boot.grpc.server.service.GrpcService;
 import ru.yandex.practicum.grpc.telemetry.collector.CollectorControllerGrpc;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
@@ -29,12 +28,16 @@ import ru.yandex.practicum.telemetry.collector.mapper.AvroEventMapper;
 import java.time.Instant;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
+@GrpcService
 public class CollectorGrpcService extends CollectorControllerGrpc.CollectorControllerImplBase {
 
     private final TelemetryProducer producer;
     private final AvroEventMapper mapper;
+
+    public CollectorGrpcService(TelemetryProducer producer, AvroEventMapper mapper) {
+        this.producer = producer;
+        this.mapper = mapper;
+    }
 
     @Override
     public void collectSensorEvent(SensorEventProto request, StreamObserver<Empty> responseObserver) {
