@@ -64,7 +64,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
             HubEventAvro avro = mapper.toHubEventAvro(
                     mapping.dto().getHubId(),
                     mapping.dto().getTimestamp(),
-                    mapping.payloadBytes());
+                    mapping.payloadBytes()
+            );
 
             producer.sendHubEvent(avro);
 
@@ -92,7 +93,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         ts,
                         p.getLinkQuality(),
                         p.getMotion(),
-                        p.getVoltage());
+                        p.getVoltage()
+                );
             }
             case LIGHT_SENSOR -> {
                 var p = event.getLightSensor();
@@ -101,7 +103,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         hubId,
                         ts,
                         p.getLinkQuality(),
-                        p.getLuminosity());
+                        p.getLuminosity()
+                );
             }
             case CLIMATE_SENSOR -> {
                 var p = event.getClimateSensor();
@@ -111,7 +114,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         ts,
                         p.getTemperatureC(),
                         p.getHumidity(),
-                        p.getCo2Level());
+                        p.getCo2Level()
+                );
             }
             case SWITCH_SENSOR -> {
                 var p = event.getSwitchSensor();
@@ -119,7 +123,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         id,
                         hubId,
                         ts,
-                        p.getState());
+                        p.getState()
+                );
             }
             case TEMPERATURE_SENSOR -> {
                 var p = event.getTemperatureSensor();
@@ -128,7 +133,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         hubId,
                         ts,
                         p.getTemperatureC(),
-                        p.getTemperatureF());
+                        p.getTemperatureF()
+                );
             }
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
         };
@@ -145,7 +151,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         hubId,
                         ts,
                         p.getId(),
-                        p.getType().name());
+                        p.getType().name()
+                );
                 yield new HubMapping(dto, p.toByteArray());
             }
             case DEVICE_REMOVED -> {
@@ -153,7 +160,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                 HubEventDto dto = new DeviceRemovedEventDto(
                         hubId,
                         ts,
-                        p.getId());
+                        p.getId()
+                );
                 yield new HubMapping(dto, p.toByteArray());
             }
             case SCENARIO_ADDED -> {
@@ -164,14 +172,16 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                                 c.getSensorId(),
                                 c.getCondition().getType().name(),
                                 c.getCondition().getOperation().name(),
-                                c.getCondition().getValue()))
+                                c.getCondition().getValue()
+                        ))
                         .toList();
 
                 List<DeviceActionDto> actions = p.getActionsList().stream()
                         .map(a -> new DeviceActionDto(
                                 a.getSensorId(),
                                 a.getAction().getType().name(),
-                                a.getAction().getValue()))
+                                a.getAction().getValue()
+                        ))
                         .toList();
 
                 HubEventDto dto = new ScenarioAddedEventDto(
@@ -179,7 +189,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         ts,
                         p.getName(),
                         conditions,
-                        actions);
+                        actions
+                );
                 yield new HubMapping(dto, p.toByteArray());
             }
             case SCENARIO_REMOVED -> {
@@ -187,11 +198,11 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                 HubEventDto dto = new ScenarioRemovedEventDto(
                         hubId,
                         ts,
-                        p.getName());
+                        p.getName()
+                );
                 yield new HubMapping(dto, p.toByteArray());
             }
-            case DEVICE_ACTION_REQUEST ->
-                throw new IllegalArgumentException("Unsupported hub event payload: DEVICE_ACTION_REQUEST");
+            case DEVICE_ACTION_REQUEST -> throw new IllegalArgumentException("Unsupported hub event payload: DEVICE_ACTION_REQUEST");
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Hub payload is not set");
         };
     }
