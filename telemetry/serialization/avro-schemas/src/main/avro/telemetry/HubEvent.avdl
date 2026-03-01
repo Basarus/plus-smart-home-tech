@@ -11,7 +11,7 @@ protocol HubEventProtocol {
 
   enum ConditionTypeAvro {
     MOTION,
-    LUMINOSITY,
+    ILLUMINATION,
     SWITCH,
     TEMPERATURE,
     CO2LEVEL,
