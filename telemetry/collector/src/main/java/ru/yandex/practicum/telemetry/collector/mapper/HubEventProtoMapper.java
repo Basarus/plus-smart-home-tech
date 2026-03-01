@@ -6,18 +6,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
-import ru.yandex.practicum.kafka.telemetry.event.ActionTypeAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ConditionOperationAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ConditionTypeAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceActionAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceAddedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceRemovedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceTypeAvro;
+import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioConditionAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioRemovedEventAvro;
 
 @Component
 public class HubEventProtoMapper {
@@ -48,7 +39,7 @@ public class HubEventProtoMapper {
         return avro;
     }
 
-    private DeviceAddedEventAvro mapDeviceAdded(HubEventProto.DeviceAddedEventProto p) {
+    private DeviceAddedEventAvro mapDeviceAdded(HubEventMessagesProto.DeviceAddedEventProto p) {
         DeviceAddedEventAvro e = new DeviceAddedEventAvro();
         e.setId(p.getId());
         e.setType(mapDeviceType(p.getDeviceType()));
