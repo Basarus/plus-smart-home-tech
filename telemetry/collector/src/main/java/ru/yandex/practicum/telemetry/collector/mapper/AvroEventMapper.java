@@ -235,6 +235,7 @@ public class AvroEventMapper {
             case ILLUMINATION -> ConditionTypeAvro.ILLUMINATION;
             case HUMIDITY -> ConditionTypeAvro.HUMIDITY;
             case SWITCH -> ConditionTypeAvro.SWITCH;
+            case CO2LEVEL -> ConditionTypeAvro.CO2LEVEL;
             case UNRECOGNIZED -> null;
         };
     }
