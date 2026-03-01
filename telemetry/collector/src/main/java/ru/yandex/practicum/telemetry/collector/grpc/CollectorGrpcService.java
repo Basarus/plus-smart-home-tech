@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
 import ru.yandex.practicum.grpc.telemetry.collector.CollectorControllerGrpc;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.telemetry.collector.api.dto.ClimateSensorEventDto;
@@ -46,13 +46,14 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
     }
 
     @Override
-    public void collectHubEvent(HubEventMessagesProto.HubEventProto request, StreamObserver<Empty> responseObserver) {
+    public void collectHubEvent(HubEventProto request, StreamObserver<Empty> responseObserver) {
         try {
             String hubId = request.getHubId();
             Instant ts = toInstant(request.getTimestamp());
             byte[] payload = request.toByteArray();
 
-            HubEventAvro avro = mapper.toHubEventAvro(hubId, ts, payload);
+            HubEventAvro avro = mapper.toHubEventAvro(request.getHubId(), toInstant(request.getTimestamp()), payload);
+
             producer.sendHubEvent(avro);
 
             responseObserver.onNext(Empty.getDefaultInstance());
