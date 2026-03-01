@@ -73,8 +73,8 @@ message DeviceActionRequest {
 }
 
 enum DeviceTypeProto {
-  TEMPERATURE_SENSOR = 1;
-  MOTION_SENSOR = 0;
+  TEMPERATURE_SENSOR = 0;
+  MOTION_SENSOR = 1;
   LIGHT_SENSOR = 2;
   HUMIDITY_SENSOR = 3;
   SWITCH_SENSOR = 4;
