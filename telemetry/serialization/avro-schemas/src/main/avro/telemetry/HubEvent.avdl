@@ -11,7 +11,7 @@ protocol HubEventProtocol {
 
   enum ConditionTypeAvro {
     MOTION,
-    ILLUMINATION,
+    LUMINOSITY,
     SWITCH,
     TEMPERATURE,
     CO2LEVEL,
@@ -44,7 +44,7 @@ protocol HubEventProtocol {
     string sensor_id;
     ConditionTypeAvro type;
     ConditionOperationAvro operation;
-    union { null, int } value = null;
+    union { null, int, boolean } value = null;
   }
 
   record DeviceActionAvro {
