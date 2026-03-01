@@ -5,6 +5,7 @@ import ru.yandex.practicum.grpc.telemetry.message.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.collector.api.dto.*;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,65 +70,20 @@ public class AvroEventMapper {
         return avro;
     }
 
-    public HubEventAvro toHubEventAvro(HubEventDto dto) {
-        HubEventAvro avro = new HubEventAvro();
-        avro.setHubId(dto.getHubId());
-        avro.setTimestamp(dto.getTimestamp());
-
-        if (dto instanceof DeviceAddedEventDto e) {
-            DeviceAddedEventAvro payload = new DeviceAddedEventAvro();
-            payload.setId(e.getId());
-            payload.setType(mapDeviceType(e.getDeviceType()));
-            avro.setPayload(payload);
-            return avro;
-        }
-
-        if (dto instanceof DeviceRemovedEventDto e) {
-            DeviceRemovedEventAvro payload = new DeviceRemovedEventAvro();
-            payload.setId(e.getId());
-            avro.setPayload(payload);
-            return avro;
-        }
-
-        if (dto instanceof ScenarioAddedEventDto e) {
-            ScenarioAddedEventAvro payload = new ScenarioAddedEventAvro();
-            payload.setName(e.getName());
-            payload.setConditions(new ArrayList<>());
-            payload.setActions(new ArrayList<>());
-            avro.setPayload(payload);
-            return avro;
-        }
-
-        if (dto instanceof ScenarioRemovedEventDto e) {
-            ScenarioRemovedEventAvro payload = new ScenarioRemovedEventAvro();
-            payload.setName(e.getName());
-            avro.setPayload(payload);
-            return avro;
-        }
-
-        throw new IllegalArgumentException("Unsupported hub event: " + dto.getClass().getName());
-    }
-
     private Instant toInstant(com.google.protobuf.Timestamp ts) {
         return Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos());
     }
 
     private DeviceTypeAvro mapDeviceType(DeviceTypeProto t) {
-        return switch (t) {
-            case SWITCH_SENSOR -> DeviceTypeAvro.valueOf("SWITCH_SENSOR");
-            case MOTION_SENSOR -> DeviceTypeAvro.valueOf("MOTION_SENSOR");
-            case TEMPERATURE_SENSOR -> DeviceTypeAvro.valueOf("TEMPERATURE_SENSOR");
-            case LIGHT_SENSOR -> DeviceTypeAvro.valueOf("LIGHT_SENSOR");
-            case HUMIDITY_SENSOR -> DeviceTypeAvro.valueOf("HUMIDITY_SENSOR");
-            default -> throw new IllegalArgumentException("Unsupported device type: " + t);
+        int n = t.getNumber();
+        return switch (n) {
+            case 1 -> DeviceTypeAvro.valueOf("MOTION_SENSOR");
+            case 2 -> DeviceTypeAvro.valueOf("TEMPERATURE_SENSOR");
+            case 3 -> DeviceTypeAvro.valueOf("LIGHT_SENSOR");
+            case 4 -> DeviceTypeAvro.valueOf("HUMIDITY_SENSOR");
+            case 5 -> DeviceTypeAvro.valueOf("SWITCH_SENSOR");
+            default -> throw new IllegalArgumentException("Unsupported device type number for Avro: " + n);
         };
-    }
-
-    private DeviceTypeAvro mapDeviceType(String s) {
-        if (s == null || s.isBlank()) {
-            throw new IllegalArgumentException("deviceType is null/blank");
-        }
-        return DeviceTypeAvro.valueOf(s);
     }
 
     private List<ScenarioConditionAvro> mapConditions(List<ScenarioConditionProto> conditions) {
@@ -137,21 +93,87 @@ public class AvroEventMapper {
             a.setSensorId(c.getSensorId());
 
             ConditionProto cond = c.getCondition();
+
             ConditionTypeProto ct = cond.getType();
             a.setType(mapConditionType(ct));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            a.setValue(mapConditionValue(ct, cond.getValue()));
+
+            Object valueObj = readConditionValue(cond, ct);
+            a.setValue(valueObj);
 
             out.add(a);
         }
         return out;
     }
 
-    private Object mapConditionValue(ConditionTypeProto type, int value) {
-        return switch (type) {
-            case MOTION, SWITCH -> Boolean.valueOf(value != 0);
-            default -> Integer.valueOf(value);
-        };
+    private Object readConditionValue(ConditionProto cond, ConditionTypeProto type) {
+        Object fromOneof = tryReadConditionValueFromOneof(cond, type);
+        if (fromOneof != null || hasValueCase(cond)) {
+            return fromOneof;
+        }
+
+        Integer fromGetValue = tryReadConditionValueFromGetValue(cond);
+        if (fromGetValue == null) {
+            return null;
+        }
+
+        return castConditionValue(type, fromGetValue);
+    }
+
+    private boolean hasValueCase(ConditionProto cond) {
+        try {
+            cond.getClass().getMethod("getValueCase");
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+    }
+
+    private Object tryReadConditionValueFromOneof(ConditionProto cond, ConditionTypeProto type) {
+        try {
+            Method getValueCase = cond.getClass().getMethod("getValueCase");
+            Object valueCase = getValueCase.invoke(cond);
+            String name = String.valueOf(valueCase);
+
+            if ("VALUE_NOT_SET".equals(name)) {
+                return null;
+            }
+
+            if ("INT_VALUE".equals(name)) {
+                Method getIntValue = cond.getClass().getMethod("getIntValue");
+                int v = (int) getIntValue.invoke(cond);
+                return castConditionValue(type, v);
+            }
+
+            if ("BOOL_VALUE".equals(name)) {
+                Method getBoolValue = cond.getClass().getMethod("getBoolValue");
+                boolean v = (boolean) getBoolValue.invoke(cond);
+                return v;
+            }
+
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Integer tryReadConditionValueFromGetValue(ConditionProto cond) {
+        try {
+            Method getValue = cond.getClass().getMethod("getValue");
+            Object v = getValue.invoke(cond);
+            if (v instanceof Integer i) return i;
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Object castConditionValue(ConditionTypeProto type, int v) {
+        int n = type.getNumber();
+        if (n == 4 || n == 5) {
+            return Boolean.valueOf(v != 0);
+        }
+        return Integer.valueOf(v);
     }
 
     private List<DeviceActionAvro> mapActions(List<ScenarioActionProto> actions) {
@@ -165,9 +187,9 @@ public class AvroEventMapper {
             a.setType(type);
 
             if (isSetValue(proto.getType())) {
-                a.setValue(Integer.valueOf(proto.getValue()));
+                a.setValue(proto.getValue());
             } else {
-                a.setValue(null);
+                a.setValue(0);
             }
 
             out.add(a);
@@ -176,38 +198,38 @@ public class AvroEventMapper {
     }
 
     private boolean isSetValue(ActionTypeProto t) {
-        return t == ActionTypeProto.SET_TEMPERATURE
-                || t == ActionTypeProto.SET_BRIGHTNESS
-                || t == ActionTypeProto.SET_HUMIDITY;
+        int n = t.getNumber();
+        return n == 3 || n == 4 || n == 5;
     }
 
     private ConditionTypeAvro mapConditionType(ConditionTypeProto t) {
-        return switch (t) {
-            case MOTION -> ConditionTypeAvro.valueOf("MOTION");
-            case TEMPERATURE -> ConditionTypeAvro.valueOf("TEMPERATURE");
-            case HUMIDITY -> ConditionTypeAvro.valueOf("HUMIDITY");
-            case ILLUMINATION -> ConditionTypeAvro.valueOf("LIGHT");
-            case SWITCH -> ConditionTypeAvro.valueOf("MOTION");
-            case CO2 -> ConditionTypeAvro.valueOf("TEMPERATURE");
-            default -> throw new IllegalArgumentException("Unsupported condition type: " + t);
+        int n = t.getNumber();
+        return switch (n) {
+            case 1 -> ConditionTypeAvro.valueOf("TEMPERATURE");
+            case 2 -> ConditionTypeAvro.valueOf("HUMIDITY");
+            case 3 -> ConditionTypeAvro.valueOf("LIGHT");
+            case 4 -> ConditionTypeAvro.valueOf("MOTION");
+            case 5 -> ConditionTypeAvro.valueOf("MOTION");
+            case 6 -> ConditionTypeAvro.valueOf("TEMPERATURE");
+            default -> throw new IllegalArgumentException("Unsupported condition type number: " + n);
         };
     }
 
     private ConditionOperationAvro mapConditionOperation(ConditionOperationProto op) {
-        return switch (op) {
-            case EQUALS -> ConditionOperationAvro.EQUALS;
-            case GREATER_THAN -> ConditionOperationAvro.GREATER_THAN;
-            case LOWER_THAN -> ConditionOperationAvro.LOWER_THAN;
+        return switch (op.getNumber()) {
+            case 1 -> ConditionOperationAvro.EQUALS;
+            case 2 -> ConditionOperationAvro.GREATER_THAN;
+            case 3 -> ConditionOperationAvro.LOWER_THAN;
             default -> throw new IllegalArgumentException("Unsupported condition operation: " + op);
         };
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
-        return switch (t) {
-            case ACTIVATE_TURN_ON -> ActionTypeAvro.valueOf("TURN_ON");
-            case ACTIVATE_TURN_OFF -> ActionTypeAvro.valueOf("TURN_OFF");
-            case SET_TEMPERATURE, SET_BRIGHTNESS, SET_HUMIDITY -> ActionTypeAvro.valueOf("SET_VALUE");
-            default -> throw new IllegalArgumentException("Unsupported action type: " + t);
+        return switch (t.getNumber()) {
+            case 1 -> ActionTypeAvro.valueOf("TURN_ON");
+            case 2 -> ActionTypeAvro.valueOf("TURN_OFF");
+            case 3, 4, 5 -> ActionTypeAvro.valueOf("SET_VALUE");
+            default -> throw new IllegalArgumentException("Unsupported action type number: " + t.getNumber());
         };
     }
 
