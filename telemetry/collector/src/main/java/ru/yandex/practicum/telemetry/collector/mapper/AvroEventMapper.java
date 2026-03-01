@@ -4,41 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.grpc.telemetry.event.ClimateSensorProto;
-import ru.yandex.practicum.grpc.telemetry.event.LightSensorProto;
-import ru.yandex.practicum.grpc.telemetry.event.MotionSensorProto;
-import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
-import ru.yandex.practicum.grpc.telemetry.event.SwitchSensorProto;
-import ru.yandex.practicum.grpc.telemetry.event.TemperatureSensorProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ActionTypeProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ConditionOperationProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ConditionProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ConditionTypeProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.DeviceAddedEventProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.DeviceRemovedEventProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.DeviceTypeProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioActionProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioAddedEventProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioConditionProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioRemovedEventProto;
-import ru.yandex.practicum.kafka.telemetry.event.ActionTypeAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ClimateSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ConditionOperationAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ConditionTypeAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceAddedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceRemovedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceTypeAvro;
-import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.LightSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.MotionSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioActionAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioConditionAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioRemovedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SwitchSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
+import ru.yandex.practicum.grpc.telemetry.event.*;
+import ru.yandex.practicum.grpc.telemetry.message.event.*;
+import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.lang.reflect.Method;
 import java.time.Instant;
@@ -62,6 +30,7 @@ public class AvroEventMapper {
         avro.setId(request.getId());
         avro.setHubId(request.getHubId());
         avro.setTimestamp(toEpochMillis(request.getTimestamp()));
+        ;
 
         Object payload;
         switch (request.getPayloadCase()) {
@@ -82,6 +51,7 @@ public class AvroEventMapper {
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(request.getHubId());
         avro.setTimestamp(toEpochMillis(request.getTimestamp()));
+        ;
 
         Object payload;
         switch (request.getPayloadCase()) {
@@ -166,7 +136,6 @@ public class AvroEventMapper {
         List<ScenarioConditionAvro> out = new ArrayList<>();
         for (ScenarioConditionProto proto : items) {
             ScenarioConditionAvro a = new ScenarioConditionAvro();
-
             a.setSensorId(proto.getSensorId());
 
             ConditionProto cond = safeInvoke(proto, ConditionProto.class, "getCondition", "getCond", "getConditionProto");
@@ -199,26 +168,27 @@ public class AvroEventMapper {
 
     private List<ScenarioActionAvro> mapActions(List<ScenarioActionProto> items) {
         List<ScenarioActionAvro> out = new ArrayList<>();
+
         for (ScenarioActionProto proto : items) {
             ScenarioActionAvro a = new ScenarioActionAvro();
 
-            String sensorId = safeInvoke(proto, String.class, "getSensorId", "getDeviceId", "getId");
+            String sensorId = safeInvoke(proto, String.class, "getSensorId", "getId", "getDeviceId");
             if (sensorId != null) a.setSensorId(sensorId);
 
             ActionTypeProto typeProto = safeInvoke(proto, ActionTypeProto.class, "getType", "getActionType");
-            if (typeProto != null) {
-                a.setType(mapActionType(typeProto));
-            }
+            ActionTypeAvro avroType = mapActionType(typeProto);
+            if (avroType != null) a.setType(avroType);
 
-            Integer v = safeInvoke(proto, Integer.class, "getValue", "getIntValue", "getSetValue");
-            if (v != null) {
-                a.setValue(v);
+            Integer value = safeInvoke(proto, Integer.class, "getValue", "getIntValue", "getSetValue");
+            if (value != null) {
+                a.setValue(value);
             } else {
                 a.setValue(0);
             }
 
             out.add(a);
         }
+
         return out;
     }
 
@@ -255,16 +225,19 @@ public class AvroEventMapper {
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
+        if (t == null) return null;
+
         return switch (t) {
-            case ACTIVATE -> ActionTypeAvro.TURN_ON;
-            case DEACTIVATE -> ActionTypeAvro.TURN_OFF;
-            case SET_VALUE -> ActionTypeAvro.SET_VALUE;
-            case INVERSE, UNRECOGNIZED -> null;
+            case ACTIVATE -> firstExistingEnum(ActionTypeAvro.class, "ACTIVATE", "TURN_ON", "ON", "ENABLE");
+            case DEACTIVATE -> firstExistingEnum(ActionTypeAvro.class, "DEACTIVATE", "TURN_OFF", "OFF", "DISABLE");
+            case INVERSE -> firstExistingEnum(ActionTypeAvro.class, "INVERSE", "TOGGLE", "SWITCH");
+            case SET_VALUE -> firstExistingEnum(ActionTypeAvro.class, "SET_VALUE", "SET", "VALUE");
+            case UNRECOGNIZED -> null;
         };
     }
 
-    private long toEpochMillis(com.google.protobuf.Timestamp ts) {
-        return Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos()).toEpochMilli();
+    private Instant toInstant(com.google.protobuf.Timestamp ts) {
+        return Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos());
     }
 
     private void putIfPresent(SpecificRecordBase record, String fieldName, Object value) {
@@ -282,6 +255,7 @@ public class AvroEventMapper {
                 Method m = target.getClass().getMethod(name);
                 Object res = m.invoke(target);
                 if (res == null) continue;
+
                 if (returnType.isInstance(res)) return returnType.cast(res);
 
                 if (returnType == Integer.class && res instanceof Number n) return returnType.cast(n.intValue());
@@ -291,5 +265,21 @@ public class AvroEventMapper {
             }
         }
         return null;
+    }
+
+    private <E extends Enum<E>> E firstExistingEnum(Class<E> enumClass, String... candidates) {
+        if (enumClass == null || candidates == null) return null;
+        for (String c : candidates) {
+            if (c == null) continue;
+            try {
+                return Enum.valueOf(enumClass, c);
+            } catch (Exception ignored) {
+            }
+        }
+        return null;
+    }
+
+    private long toEpochMillis(com.google.protobuf.Timestamp ts) {
+        return ts.getSeconds() * 1000L + ts.getNanos() / 1_000_000L;
     }
 }
