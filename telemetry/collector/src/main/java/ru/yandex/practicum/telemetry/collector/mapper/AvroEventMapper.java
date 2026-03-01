@@ -183,6 +183,7 @@ public class AvroEventMapper {
 
     private List<ScenarioConditionAvro> mapConditions(List<ScenarioConditionProto> conditions) {
         List<ScenarioConditionProto> sorted = new ArrayList<>(conditions);
+        sorted.sort(Comparator.comparingInt(c -> conditionRank(c.getType())));
 
         List<ScenarioConditionAvro> out = new ArrayList<>(sorted.size());
         for (ScenarioConditionProto c : sorted) {
@@ -190,17 +191,25 @@ public class AvroEventMapper {
             a.setSensorId(c.getSensorId());
             a.setType(mapConditionType(c.getType()));
             a.setOperation(mapConditionOperation(c.getOperation()));
-            a.setValue(mapConditionValue(c));
+            a.setValue(mapConditionValueAsInt(c));
             out.add(a);
         }
 
         return out;
     }
 
-    private Object mapConditionValue(ScenarioConditionProto c) {
+    private int conditionRank(ConditionTypeProto t) {
+        return switch (t) {
+            case ILLUMINATION, TEMPERATURE, CO2LEVEL, HUMIDITY -> 0;
+            case MOTION, SWITCH -> 1;
+            case UNRECOGNIZED -> 2;
+        };
+    }
+
+    private Integer mapConditionValueAsInt(ScenarioConditionProto c) {
         return switch (c.getValueCase()) {
             case INT_VALUE -> c.getIntValue();
-            case BOOL_VALUE -> c.getBoolValue();
+            case BOOL_VALUE -> c.getBoolValue() ? 1 : 0;
             case VALUE_NOT_SET -> null;
         };
     }
