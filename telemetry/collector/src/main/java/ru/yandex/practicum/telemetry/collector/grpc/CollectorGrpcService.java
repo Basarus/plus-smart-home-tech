@@ -52,7 +52,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
             Instant ts = toInstant(request.getTimestamp());
             byte[] payload = request.toByteArray();
 
-            HubEventAvro avro = mapper.toHubEventAvro(request.getHubId(), toInstant(request.getTimestamp()), payload);
+            HubEventAvro avro = mapper.toHubEventAvro(request.getHubId(), ts, payload);;
 
             producer.sendHubEvent(avro);
 

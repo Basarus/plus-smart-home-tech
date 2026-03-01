@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.collector.api.dto.*;
 
+import java.time.Instant;
+
 @Component
 public class AvroEventMapper {
 
@@ -25,10 +27,10 @@ public class AvroEventMapper {
         return avro;
     }
 
-    public HubEventAvro toHubEventAvro(String hubId, long timestampMs, byte[] protoPayload) {
+    public HubEventAvro toHubEventAvro(String hubId, Instant timestamp, byte[] protoPayload) {
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(hubId);
-        avro.setTimestamp(timestampMs);
+        avro.setTimestamp(timestamp);
         avro.setPayload(protoPayload);
         return avro;
     }
