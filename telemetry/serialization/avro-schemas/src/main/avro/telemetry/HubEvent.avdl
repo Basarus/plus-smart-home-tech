@@ -1,9 +1,6 @@
 @namespace("ru.yandex.practicum.kafka.telemetry.event")
 protocol HubEventProtocol {
 
-  @logicalType("timestamp-millis")
-  record timestamp_ms { long millis; }
-
   enum DeviceTypeAvro {
     SWITCH_SENSOR,
     MOTION_SENSOR,
@@ -12,9 +9,24 @@ protocol HubEventProtocol {
     HUMIDITY_SENSOR
   }
 
-  enum ConditionTypeAvro { MOTION, TEMPERATURE, LIGHT, HUMIDITY }
-  enum ConditionOperationAvro { EQUALS, GREATER_THAN, LOWER_THAN }
-  enum ActionTypeAvro { TURN_ON, TURN_OFF, SET_VALUE }
+  enum ConditionTypeAvro {
+    MOTION,
+    TEMPERATURE,
+    LIGHT,
+    HUMIDITY
+  }
+
+  enum ConditionOperationAvro {
+    EQUALS,
+    GREATER_THAN,
+    LOWER_THAN
+  }
+
+  enum ActionTypeAvro {
+    TURN_ON,
+    TURN_OFF,
+    SET_VALUE
+  }
 
   record DeviceAddedEventAvro {
     string id;

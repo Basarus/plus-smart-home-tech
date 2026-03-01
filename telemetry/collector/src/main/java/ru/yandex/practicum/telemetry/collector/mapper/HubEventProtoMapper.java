@@ -1,96 +1,150 @@
 package ru.yandex.practicum.telemetry.collector.mapper;
 
-import com.google.protobuf.Timestamp;
-import org.springframework.stereotype.Component;
-import ru.yandex.practicum.grpc.telemetry.message.event.ActionTypeProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ConditionOperationProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ConditionProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ConditionTypeProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.DeviceActionProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.DeviceAddedEventProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.DeviceRemovedEventProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.DeviceTypeProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioActionProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioAddedEventProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioConditionProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.ScenarioRemovedEventProto;
-import ru.yandex.practicum.telemetry.collector.api.dto.DeviceActionDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.DeviceAddedEventDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.DeviceRemovedEventDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.HubEventDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.ScenarioAddedEventDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.ScenarioConditionDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.ScenarioRemovedEventDto;
-
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
+import ru.yandex.practicum.kafka.telemetry.event.ActionTypeAvro;
+import ru.yandex.practicum.kafka.telemetry.event.ConditionOperationAvro;
+import ru.yandex.practicum.kafka.telemetry.event.ConditionTypeAvro;
+import ru.yandex.practicum.kafka.telemetry.event.DeviceActionAvro;
+import ru.yandex.practicum.kafka.telemetry.event.DeviceAddedEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.DeviceRemovedEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.DeviceTypeAvro;
+import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.ScenarioConditionAvro;
+import ru.yandex.practicum.kafka.telemetry.event.ScenarioRemovedEventAvro;
 
 @Component
 public class HubEventProtoMapper {
 
-    public HubEventProto toProto(HubEventDto dto) {
-        HubEventProto.Builder b = HubEventProto.newBuilder()
-                .setHubId(dto.getHubId())
-                .setTimestamp(toProtoTs(dto.getTimestamp()));
-
-        if (dto instanceof DeviceAddedEventDto e) {
-            b.setDeviceAdded(DeviceAddedEventProto.newBuilder()
-                    .setId(e.getId())
-                    .setType(DeviceTypeProto.valueOf(e.getDeviceType()))
-                    .build());
-            return b.build();
+    public HubEventAvro toHubEventAvro(String hubId, Instant timestamp, byte[] protoPayload) {
+        try {
+            HubEventProto proto = HubEventProto.parseFrom(protoPayload);
+            return toHubEventAvro(proto);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Cannot parse HubEventProto from bytes", e);
         }
-
-        if (dto instanceof DeviceRemovedEventDto e) {
-            b.setDeviceRemoved(DeviceRemovedEventProto.newBuilder()
-                    .setId(e.getId())
-                    .build());
-            return b.build();
-        }
-
-        if (dto instanceof ScenarioRemovedEventDto e) {
-            b.setScenarioRemoved(ScenarioRemovedEventProto.newBuilder()
-                    .setName(e.getName())
-                    .build());
-            return b.build();
-        }
-
-        if (dto instanceof ScenarioAddedEventDto e) {
-            ScenarioAddedEventProto.Builder sb = ScenarioAddedEventProto.newBuilder()
-                    .setName(e.getName());
-
-            for (ScenarioConditionDto c : e.getConditions()) {
-                sb.addConditions(ScenarioConditionProto.newBuilder()
-                        .setSensorId(c.sensorId())
-                        .setCondition(ConditionProto.newBuilder()
-                                .setType(ConditionTypeProto.valueOf(c.type()))
-                                .setOperation(ConditionOperationProto.valueOf(c.operation()))
-                                .setValue(c.value())
-                                .build())
-                        .build());
-            }
-
-            for (DeviceActionDto a : e.getActions()) {
-                sb.addActions(ScenarioActionProto.newBuilder()
-                        .setSensorId(a.sensorId())
-                        .setAction(DeviceActionProto.newBuilder()
-                                .setType(ActionTypeProto.valueOf(a.type()))
-                                .setValue(a.value())
-                                .build())
-                        .build());
-            }
-
-            b.setScenarioAdded(sb.build());
-            return b.build();
-        }
-
-        throw new IllegalArgumentException("Unsupported hub event: " + dto.getClass().getName());
     }
 
-    private Timestamp toProtoTs(Instant instant) {
-        return Timestamp.newBuilder()
-                .setSeconds(instant.getEpochSecond())
-                .setNanos(instant.getNano())
-                .build();
+    public HubEventAvro toHubEventAvro(HubEventProto proto) {
+        HubEventAvro avro = new HubEventAvro();
+        avro.setHubId(proto.getHubId());
+        avro.setTimestamp(Instant.ofEpochMilli(proto.getTimestamp()));
+
+        Object payload = switch (proto.getPayloadCase()) {
+            case DEVICE_ADDED -> mapDeviceAdded(proto.getDeviceAdded());
+            case DEVICE_REMOVED -> mapDeviceRemoved(proto.getDeviceRemoved());
+            case SCENARIO_ADDED -> mapScenarioAdded(proto.getScenarioAdded());
+            case SCENARIO_REMOVED -> mapScenarioRemoved(proto.getScenarioRemoved());
+            case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("HubEventProto payload is not set");
+        };
+
+        avro.setPayload(payload);
+        return avro;
+    }
+
+    private DeviceAddedEventAvro mapDeviceAdded(HubEventProto.DeviceAddedEventProto p) {
+        DeviceAddedEventAvro e = new DeviceAddedEventAvro();
+        e.setId(p.getId());
+        e.setType(mapDeviceType(p.getDeviceType()));
+        return e;
+    }
+
+    private DeviceRemovedEventAvro mapDeviceRemoved(HubEventProto.DeviceRemovedEventProto p) {
+        DeviceRemovedEventAvro e = new DeviceRemovedEventAvro();
+        e.setId(p.getId());
+        return e;
+    }
+
+    private ScenarioAddedEventAvro mapScenarioAdded(HubEventProto.ScenarioAddedEventProto p) {
+        ScenarioAddedEventAvro e = new ScenarioAddedEventAvro();
+        e.setName(p.getName());
+
+        List<ScenarioConditionAvro> conditions = new ArrayList<>();
+        for (HubEventProto.ScenarioConditionProto c : p.getConditionsList()) {
+            ScenarioConditionAvro ca = new ScenarioConditionAvro();
+            ca.setSensorId(c.getSensorId());
+            ca.setType(mapConditionType(c.getType()));
+            ca.setOperation(mapConditionOperation(c.getOperation()));
+
+            Object value = null;
+            if (c.getType() == HubEventProto.ConditionTypeProto.MOTION) {
+                value = c.getValue() != 0;
+            } else {
+                value = c.getValue();
+            }
+            ca.setValue(value);
+
+            conditions.add(ca);
+        }
+        e.setConditions(conditions);
+
+        List<DeviceActionAvro> actions = new ArrayList<>();
+        for (HubEventProto.ScenarioActionProto a : p.getActionsList()) {
+            DeviceActionAvro aa = new DeviceActionAvro();
+            aa.setSensorId(a.getSensorId());
+            aa.setType(mapActionType(a.getType()));
+
+            Object value = null;
+            if (a.getType() == HubEventProto.ActionTypeProto.SET_VALUE) {
+                value = a.getValue();
+            }
+            aa.setValue(value);
+
+            actions.add(aa);
+        }
+        e.setActions(actions);
+
+        return e;
+    }
+
+    private ScenarioRemovedEventAvro mapScenarioRemoved(HubEventProto.ScenarioRemovedEventProto p) {
+        ScenarioRemovedEventAvro e = new ScenarioRemovedEventAvro();
+        e.setName(p.getName());
+        return e;
+    }
+
+    private DeviceTypeAvro mapDeviceType(HubEventProto.DeviceTypeProto t) {
+        return switch (t) {
+            case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
+            case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
+            case TEMPERATURE_SENSOR -> DeviceTypeAvro.TEMPERATURE_SENSOR;
+            case LIGHT_SENSOR -> DeviceTypeAvro.LIGHT_SENSOR;
+            case HUMIDITY_SENSOR -> DeviceTypeAvro.HUMIDITY_SENSOR;
+            case UNRECOGNIZED -> throw new IllegalArgumentException("Unsupported device type: " + t);
+        };
+    }
+
+    private ConditionTypeAvro mapConditionType(HubEventProto.ConditionTypeProto t) {
+        return switch (t) {
+            case MOTION -> ConditionTypeAvro.MOTION;
+            case TEMPERATURE -> ConditionTypeAvro.TEMPERATURE;
+            case LIGHT -> ConditionTypeAvro.LIGHT;
+            case HUMIDITY -> ConditionTypeAvro.HUMIDITY;
+            case UNRECOGNIZED -> throw new IllegalArgumentException("Unsupported condition type: " + t);
+        };
+    }
+
+    private ConditionOperationAvro mapConditionOperation(HubEventProto.ConditionOperationProto op) {
+        return switch (op) {
+            case EQUALS -> ConditionOperationAvro.EQUALS;
+            case GREATER_THAN -> ConditionOperationAvro.GREATER_THAN;
+            case LOWER_THAN -> ConditionOperationAvro.LOWER_THAN;
+            case UNRECOGNIZED -> throw new IllegalArgumentException("Unsupported condition operation: " + op);
+        };
+    }
+
+    private ActionTypeAvro mapActionType(HubEventProto.ActionTypeProto t) {
+        return switch (t) {
+            case TURN_ON -> ActionTypeAvro.TURN_ON;
+            case TURN_OFF -> ActionTypeAvro.TURN_OFF;
+            case SET_VALUE -> ActionTypeAvro.SET_VALUE;
+            case UNRECOGNIZED -> throw new IllegalArgumentException("Unsupported action type: " + t);
+        };
     }
 }
