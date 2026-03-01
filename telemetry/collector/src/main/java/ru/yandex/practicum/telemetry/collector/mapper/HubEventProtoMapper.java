@@ -54,7 +54,7 @@ public class HubEventProtoMapper {
             case "MOTION_SENSOR" -> DeviceTypeProto.MOTION_SENSOR;
             case "TEMPERATURE_SENSOR" -> DeviceTypeProto.TEMPERATURE_SENSOR;
             case "LIGHT_SENSOR" -> DeviceTypeProto.LIGHT_SENSOR;
-            case "HUMIDITY_SENSOR" -> DeviceTypeProto.HUMIDITY_SENSOR;
+            case "CLIMATE_SENSOR" -> DeviceTypeProto.CLIMATE_SENSOR;
             case "SWITCH_SENSOR" -> DeviceTypeProto.SWITCH_SENSOR;
             default -> throw new IllegalArgumentException("Unsupported device type: " + s);
         };
