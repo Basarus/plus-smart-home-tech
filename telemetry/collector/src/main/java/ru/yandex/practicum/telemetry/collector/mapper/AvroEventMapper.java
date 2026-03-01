@@ -26,6 +26,7 @@ public class AvroEventMapper {
             case TemperatureSensorEventDto e -> {
                 TemperatureSensorAvro a = new TemperatureSensorAvro();
                 a.setTemperatureC(e.temperatureC());
+                a.setLinkQuality(0);
                 yield a;
             }
             case LightSensorEventDto e -> {
@@ -38,11 +39,14 @@ public class AvroEventMapper {
                 ClimateSensorAvro a = new ClimateSensorAvro();
                 a.setTemperatureC(e.temperatureC());
                 a.setHumidity(e.humidity());
+                a.setCo2(e.co2Level());
+                a.setLinkQuality(0);
                 yield a;
             }
             case SwitchSensorEventDto e -> {
                 SwitchSensorAvro a = new SwitchSensorAvro();
                 a.setState(e.state());
+                a.setLinkQuality(0);
                 yield a;
             }
             default -> throw new IllegalArgumentException("Unsupported sensor event: " + dto.getClass().getName());
@@ -74,6 +78,7 @@ public class AvroEventMapper {
                 var p = request.getTemperatureSensor();
                 TemperatureSensorAvro a = new TemperatureSensorAvro();
                 a.setTemperatureC(p.getTemperatureC());
+                a.setLinkQuality(0);
                 yield a;
             }
             case LIGHT_SENSOR -> {
@@ -88,12 +93,15 @@ public class AvroEventMapper {
                 ClimateSensorAvro a = new ClimateSensorAvro();
                 a.setTemperatureC(p.getTemperatureC());
                 a.setHumidity(p.getHumidity());
+                a.setCo2(p.getCo2Level());
+                a.setLinkQuality(0);
                 yield a;
             }
             case SWITCH_SENSOR -> {
                 var p = request.getSwitchSensor();
                 SwitchSensorAvro a = new SwitchSensorAvro();
                 a.setState(p.getState());
+                a.setLinkQuality(0);
                 yield a;
             }
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
