@@ -31,14 +31,28 @@ public class TelemetryProducer {
     public void sendSensorEvent(SensorEventAvro event) {
         String key = event.getHubId();
         Long timestamp = toKafkaTimestamp(event.getTimestamp());
-        producer.send(new ProducerRecord<>(topics.sensors(), null, timestamp, key, serialize(event)));
+
+        producer.send(new ProducerRecord<>(
+                topics.sensors(),
+                null,
+                timestamp,
+                key,
+                serialize(event)
+        ));
         producer.flush();
     }
 
     public void sendHubEvent(HubEventAvro event) {
         String key = event.getHubId();
         Long timestamp = toKafkaTimestamp(event.getTimestamp());
-        producer.send(new ProducerRecord<>(topics.hubs(), null, timestamp, key, serialize(event)));
+
+        producer.send(new ProducerRecord<>(
+                topics.hubs(),
+                null,
+                timestamp,
+                key,
+                serialize(event)
+        ));
         producer.flush();
     }
 
@@ -53,19 +67,15 @@ public class TelemetryProducer {
     }
 
     private Long toKafkaTimestamp(Object avroTimestamp) {
-        if (avroTimestamp == null) {
-            return null;
-        }
-        if (avroTimestamp instanceof java.time.Instant i) {
-            return i.toEpochMilli();
-        }
-        if (avroTimestamp instanceof Long l) {
-            return l;
-        }
-        if (avroTimestamp instanceof Integer i) {
-            return i.longValue();
-        }
-        throw new IllegalArgumentException("Unsupported timestamp type: " + avroTimestamp.getClass().getName());
+        if (avroTimestamp == null) return null;
+
+        if (avroTimestamp instanceof java.time.Instant i) return i.toEpochMilli();
+        if (avroTimestamp instanceof Long l) return l;
+        if (avroTimestamp instanceof Integer i) return i.longValue();
+
+        throw new IllegalArgumentException(
+                "Unsupported timestamp type: " + avroTimestamp.getClass().getName()
+        );
     }
 
     private byte[] serialize(SensorEventAvro event) {
@@ -73,14 +83,7 @@ public class TelemetryProducer {
     }
 
     private byte[] serialize(HubEventAvro event) {
-        try {
-            var bb = HubEventAvro.getEncoder().encode(event);
-            byte[] out = new byte[bb.remaining()];
-            bb.get(out);
-            return out;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return serializeInternal(event, new SpecificDatumWriter<>(HubEventAvro.class));
     }
 
     private <T> byte[] serializeInternal(T event, SpecificDatumWriter<T> writer) {
