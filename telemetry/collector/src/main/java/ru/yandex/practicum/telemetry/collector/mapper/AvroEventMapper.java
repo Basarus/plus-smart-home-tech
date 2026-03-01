@@ -67,7 +67,7 @@ public class AvroEventMapper {
                 ClimateSensorAvro a = new ClimateSensorAvro();
                 a.setTemperatureC(p.getTemperatureC());
                 a.setHumidity(p.getHumidity());
-                a.setCo2(p.getCo2Level());
+                a.setCo2Level(p.getCo2Level());
                 yield a;
             }
             case SWITCH_SENSOR -> {
