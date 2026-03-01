@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ru.yandex.practicum.grpc.telemetry.event.SensorEventProto.PayloadCase.CLIMATE_SENSOR;
 import static ru.yandex.practicum.kafka.telemetry.event.ActionTypeAvro.*;
 
 @Component
@@ -126,7 +127,7 @@ public class AvroEventMapper {
             case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
             case TEMPERATURE_SENSOR -> DeviceTypeAvro.TEMPERATURE_SENSOR;
             case LIGHT_SENSOR -> DeviceTypeAvro.LIGHT_SENSOR;
-            case HUMIDITY_SENSOR -> DeviceTypeAvro.HUMIDITY_SENSOR;
+            case CLIMATE_SENSOR -> DeviceTypeAvro.CLIMATE_SENSOR;
             case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
             case UNRECOGNIZED -> throw new IllegalArgumentException("Unknown deviceType: " + t);
             default -> throw new IllegalArgumentException("Unsupported deviceType for avro: " + t);
@@ -140,6 +141,7 @@ public class AvroEventMapper {
             case "MOTION_SENSOR" -> DeviceTypeAvro.MOTION_SENSOR;
             case "TEMPERATURE_SENSOR" -> DeviceTypeAvro.TEMPERATURE_SENSOR;
             case "LIGHT_SENSOR" -> DeviceTypeAvro.LIGHT_SENSOR;
+            case "CLIMATE_SENSOR" -> DeviceTypeAvro.CLIMATE_SENSOR;
             case "HUMIDITY_SENSOR" -> DeviceTypeAvro.HUMIDITY_SENSOR;
             case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
             default -> throw new IllegalArgumentException("Unknown deviceType: " + s);

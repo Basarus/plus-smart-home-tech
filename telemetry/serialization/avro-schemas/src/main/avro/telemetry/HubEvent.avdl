@@ -2,18 +2,17 @@
 protocol HubEventProtocol {
 
   enum DeviceTypeAvro {
-    SWITCH_SENSOR,
     MOTION_SENSOR,
     TEMPERATURE_SENSOR,
     LIGHT_SENSOR,
-    HUMIDITY_SENSOR
+    CLIMATE_SENSOR,
+    SWITCH_SENSOR
   }
 
   enum ConditionTypeAvro {
     MOTION,
     TEMPERATURE,
-    LIGHT,
-    HUMIDITY
+    LIGHT
   }
 
   enum ConditionOperationAvro {
@@ -41,13 +40,13 @@ protocol HubEventProtocol {
     string sensorId;
     ConditionTypeAvro type;
     ConditionOperationAvro operation;
-    union { null, int, boolean } value = null;
+    int value;
   }
 
   record DeviceActionAvro {
     string sensorId;
     ActionTypeAvro type;
-    union { null, int } value = null;
+    int value;
   }
 
   record ScenarioAddedEventAvro {
