@@ -43,7 +43,7 @@ public class AvroEventMapper {
         SensorEventAvro avro = new SensorEventAvro();
         avro.setId(request.getId());
         avro.setHubId(request.getHubId());
-        avro.setTimestamp(request.getTimestamp());
+        avro.setTimestamp(toInstant(request.getTimestamp()));
 
         Object payload = switch (request.getPayloadCase()) {
             case MOTION_SENSOR -> {
@@ -96,7 +96,7 @@ public class AvroEventMapper {
 
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(request.getHubId());
-        avro.setTimestamp(request.getTimestamp());
+        avro.setTimestamp(toInstant(request.getTimestamp()));
 
         switch (request.getPayloadCase()) {
             case DEVICE_ADDED -> {
