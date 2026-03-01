@@ -63,8 +63,7 @@ public class AvroEventMapper {
                 payload.setName(p.getName());
                 avro.setPayload(payload);
             }
-            case DEVICE_ACTION_REQUEST, PAYLOAD_NOT_SET ->
-                    throw new IllegalArgumentException("Unsupported hub payload: " + request.getPayloadCase());
+            default -> throw new IllegalArgumentException("Unsupported hub payload: " + request.getPayloadCase());
         }
 
         return avro;
@@ -115,25 +114,20 @@ public class AvroEventMapper {
 
     private DeviceTypeAvro mapDeviceType(DeviceTypeProto t) {
         return switch (t) {
-            case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
-            case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
-            case TEMPERATURE_SENSOR -> DeviceTypeAvro.TEMPERATURE_SENSOR;
-            case LIGHT_SENSOR -> DeviceTypeAvro.LIGHT_SENSOR;
-            case HUMIDITY_SENSOR -> DeviceTypeAvro.HUMIDITY_SENSOR;
+            case SWITCH_SENSOR -> DeviceTypeAvro.valueOf("SWITCH_SENSOR");
+            case MOTION_SENSOR -> DeviceTypeAvro.valueOf("MOTION_SENSOR");
+            case TEMPERATURE_SENSOR -> DeviceTypeAvro.valueOf("TEMPERATURE_SENSOR");
+            case LIGHT_SENSOR -> DeviceTypeAvro.valueOf("LIGHT_SENSOR");
+            case HUMIDITY_SENSOR -> DeviceTypeAvro.valueOf("HUMIDITY_SENSOR");
             default -> throw new IllegalArgumentException("Unsupported device type: " + t);
         };
     }
 
     private DeviceTypeAvro mapDeviceType(String s) {
-        if (s == null) throw new IllegalArgumentException("deviceType is null");
-        return switch (s) {
-            case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
-            case "MOTION_SENSOR" -> DeviceTypeAvro.MOTION_SENSOR;
-            case "TEMPERATURE_SENSOR" -> DeviceTypeAvro.TEMPERATURE_SENSOR;
-            case "LIGHT_SENSOR" -> DeviceTypeAvro.LIGHT_SENSOR;
-            case "HUMIDITY_SENSOR" -> DeviceTypeAvro.HUMIDITY_SENSOR;
-            default -> throw new IllegalArgumentException("Unknown deviceType: " + s);
-        };
+        if (s == null || s.isBlank()) {
+            throw new IllegalArgumentException("deviceType is null/blank");
+        }
+        return DeviceTypeAvro.valueOf(s);
     }
 
     private List<ScenarioConditionAvro> mapConditions(List<ScenarioConditionProto> conditions) {
@@ -143,23 +137,20 @@ public class AvroEventMapper {
             a.setSensorId(c.getSensorId());
 
             ConditionProto cond = c.getCondition();
-            a.setType(mapConditionType(cond.getType()));
+            ConditionTypeProto ct = cond.getType();
+            a.setType(mapConditionType(ct));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            a.setValue(mapConditionValue(cond));
+            a.setValue(mapConditionValue(ct, cond.getValue()));
 
             out.add(a);
         }
         return out;
     }
 
-    private Object mapConditionValue(ConditionProto cond) {
-        ConditionTypeProto type = cond.getType();
-        int value = cond.getValue();
-
+    private Object mapConditionValue(ConditionTypeProto type, int value) {
         return switch (type) {
-            case MOTION, SWITCH -> value != 0;
-            case TEMPERATURE, HUMIDITY, ILLUMINATION -> value;
-            default -> throw new IllegalArgumentException("Unsupported condition type for value: " + type);
+            case MOTION, SWITCH -> Boolean.valueOf(value != 0);
+            default -> Integer.valueOf(value);
         };
     }
 
@@ -173,8 +164,8 @@ public class AvroEventMapper {
             ActionTypeAvro type = mapActionType(proto.getType());
             a.setType(type);
 
-            if (type == ActionTypeAvro.SET_VALUE) {
-                a.setValue(proto.getValue());
+            if (isSetValue(proto.getType())) {
+                a.setValue(Integer.valueOf(proto.getValue()));
             } else {
                 a.setValue(null);
             }
@@ -184,12 +175,20 @@ public class AvroEventMapper {
         return out;
     }
 
+    private boolean isSetValue(ActionTypeProto t) {
+        return t == ActionTypeProto.SET_TEMPERATURE
+                || t == ActionTypeProto.SET_BRIGHTNESS
+                || t == ActionTypeProto.SET_HUMIDITY;
+    }
+
     private ConditionTypeAvro mapConditionType(ConditionTypeProto t) {
         return switch (t) {
-            case MOTION -> ConditionTypeAvro.MOTION;
-            case TEMPERATURE -> ConditionTypeAvro.TEMPERATURE;
-            case HUMIDITY -> ConditionTypeAvro.HUMIDITY;
-            case ILLUMINATION -> ConditionTypeAvro.LIGHT;
+            case MOTION -> ConditionTypeAvro.valueOf("MOTION");
+            case TEMPERATURE -> ConditionTypeAvro.valueOf("TEMPERATURE");
+            case HUMIDITY -> ConditionTypeAvro.valueOf("HUMIDITY");
+            case ILLUMINATION -> ConditionTypeAvro.valueOf("LIGHT");
+            case SWITCH -> ConditionTypeAvro.valueOf("MOTION");
+            case CO2 -> ConditionTypeAvro.valueOf("TEMPERATURE");
             default -> throw new IllegalArgumentException("Unsupported condition type: " + t);
         };
     }
@@ -205,9 +204,9 @@ public class AvroEventMapper {
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
         return switch (t) {
-            case ACTIVATE_TURN_ON -> ActionTypeAvro.TURN_ON;
-            case ACTIVATE_TURN_OFF -> ActionTypeAvro.TURN_OFF;
-            case SET_TEMPERATURE, SET_BRIGHTNESS, SET_HUMIDITY -> ActionTypeAvro.SET_VALUE;
+            case ACTIVATE_TURN_ON -> ActionTypeAvro.valueOf("TURN_ON");
+            case ACTIVATE_TURN_OFF -> ActionTypeAvro.valueOf("TURN_OFF");
+            case SET_TEMPERATURE, SET_BRIGHTNESS, SET_HUMIDITY -> ActionTypeAvro.valueOf("SET_VALUE");
             default -> throw new IllegalArgumentException("Unsupported action type: " + t);
         };
     }

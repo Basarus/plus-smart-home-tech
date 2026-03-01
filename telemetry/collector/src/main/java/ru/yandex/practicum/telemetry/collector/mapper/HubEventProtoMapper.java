@@ -56,13 +56,6 @@ public class HubEventProtoMapper {
             case "LIGHT_SENSOR" -> DeviceTypeProto.LIGHT_SENSOR;
             case "HUMIDITY_SENSOR" -> DeviceTypeProto.HUMIDITY_SENSOR;
             case "SWITCH_SENSOR" -> DeviceTypeProto.SWITCH_SENSOR;
-            case "CO2_SENSOR" -> DeviceTypeProto.CO2_SENSOR;
-            case "SMART_PLUG" -> DeviceTypeProto.SMART_PLUG;
-            case "LAMP" -> DeviceTypeProto.LAMP;
-            case "AIR_CONDITIONER" -> DeviceTypeProto.AIR_CONDITIONER;
-            case "HEATER" -> DeviceTypeProto.HEATER;
-            case "HUMIDIFIER" -> DeviceTypeProto.HUMIDIFIER;
-            case "VENTILATION" -> DeviceTypeProto.VENTILATION;
             default -> throw new IllegalArgumentException("Unsupported device type: " + s);
         };
     }
