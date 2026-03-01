@@ -18,37 +18,11 @@ public class AvroEventMapper {
     public SensorEventAvro toAvro(SensorEventDto dto) {
         log.debug("Mapping SensorEventDto: type={}, id={}, hubId={}", dto.getClass().getSimpleName(), dto.getId(), dto.getHubId());
         Object payload = switch (dto) {
-            case MotionSensorEventDto e -> {
-                MotionSensorAvro a = new MotionSensorAvro();
-                a.setLinkQuality(e.linkQuality());
-                a.setMotion(e.motion());
-                a.setVoltage(e.voltage());
-                yield a;
-            }
-            case TemperatureSensorEventDto e -> {
-                TemperatureSensorAvro a = new TemperatureSensorAvro();
-                a.setTemperatureC(e.temperatureC());
-                a.setTemperatureF(e.temperatureF());
-                yield a;
-            }
-            case LightSensorEventDto e -> {
-                LightSensorAvro a = new LightSensorAvro();
-                a.setLinkQuality(e.linkQuality());
-                a.setLuminosity(e.luminosity());
-                yield a;
-            }
-            case ClimateSensorEventDto e -> {
-                ClimateSensorAvro a = new ClimateSensorAvro();
-                a.setTemperatureC(e.temperatureC());
-                a.setHumidity(e.humidity());
-                a.setCo2Level(e.co2Level());
-                yield a;
-            }
-            case SwitchSensorEventDto e -> {
-                SwitchSensorAvro a = new SwitchSensorAvro();
-                a.setState(e.state());
-                yield a;
-            }
+            case MotionSensorEventDto e -> motion(e);
+            case TemperatureSensorEventDto e -> temperature(e);
+            case LightSensorEventDto e -> light(e);
+            case ClimateSensorEventDto e -> climate(e);
+            case SwitchSensorEventDto e -> sw(e);
             default -> throw new IllegalArgumentException("Unsupported sensor event: " + dto.getClass().getName());
         };
 
@@ -57,7 +31,7 @@ public class AvroEventMapper {
         avro.setHubId(dto.getHubId());
         avro.setTimestamp(dto.getTimestamp());
         avro.setPayload(payload);
-        log.debug("Mapped SensorEventAvro: id={}, hubId={}, payload={}", avro.getId(), avro.getHubId(), payload);
+        log.debug("Mapped SensorEventAvro: id={}, hubId={}, payloadType={}", avro.getId(), avro.getHubId(), payload.getClass().getSimpleName());
         return avro;
     }
 
@@ -75,6 +49,7 @@ public class AvroEventMapper {
                 a.setLinkQuality(p.getLinkQuality());
                 a.setMotion(p.getMotion());
                 a.setVoltage(p.getVoltage());
+                log.debug("MotionSensor: linkQuality={}, motion={}, voltage={}", p.getLinkQuality(), p.getMotion(), p.getVoltage());
                 yield a;
             }
             case TEMPERATURE_SENSOR -> {
@@ -82,6 +57,7 @@ public class AvroEventMapper {
                 TemperatureSensorAvro a = new TemperatureSensorAvro();
                 a.setTemperatureC(p.getTemperatureC());
                 a.setTemperatureF(p.getTemperatureF());
+                log.debug("TemperatureSensor: temperatureC={}, temperatureF={}", p.getTemperatureC(), p.getTemperatureF());
                 yield a;
             }
             case LIGHT_SENSOR -> {
@@ -89,6 +65,7 @@ public class AvroEventMapper {
                 LightSensorAvro a = new LightSensorAvro();
                 a.setLinkQuality(p.getLinkQuality());
                 a.setLuminosity(p.getLuminosity());
+                log.debug("LightSensor: linkQuality={}, luminosity={}", p.getLinkQuality(), p.getLuminosity());
                 yield a;
             }
             case CLIMATE_SENSOR -> {
@@ -96,22 +73,21 @@ public class AvroEventMapper {
                 ClimateSensorAvro a = new ClimateSensorAvro();
                 a.setTemperatureC(p.getTemperatureC());
                 a.setHumidity(p.getHumidity());
-                a.setCo2Level(p.getCo2());
-                a.setLinkQuality(p.getLinkQuality());
+                log.debug("ClimateSensor: temperatureC={}, humidity={}, co2={}", p.getTemperatureC(), p.getHumidity(), p.getCo2());
                 yield a;
             }
             case SWITCH_SENSOR -> {
                 var p = request.getSwitchSensor();
                 SwitchSensorAvro a = new SwitchSensorAvro();
                 a.setState(p.getState());
-                a.setLinkQuality(p.getLinkQuality());
+                log.debug("SwitchSensor: state={}", p.getState());
                 yield a;
             }
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
         };
 
         avro.setPayload(payload);
-        log.debug("Mapped SensorEventAvro from proto: id={}, hubId={}, payload={}", avro.getId(), avro.getHubId(), payload);
+        log.debug("Mapped SensorEventAvro from proto: id={}, hubId={}, payloadType={}", avro.getId(), avro.getHubId(), payload.getClass().getSimpleName());
         return avro;
     }
 
@@ -141,11 +117,11 @@ public class AvroEventMapper {
                 var p = request.getScenarioAdded();
                 ScenarioAddedEventAvro payload = new ScenarioAddedEventAvro();
                 payload.setName(p.getName());
+                log.debug("SCENARIO_ADDED: name={}, conditions count={}, actions count={}", p.getName(), p.getConditionsList().size(), p.getActionsList().size());
                 payload.setConditions(mapConditions(p.getConditionsList()));
                 payload.setActions(mapActions(p.getActionsList()));
                 avro.setPayload(payload);
-                log.debug("Mapped SCENARIO_ADDED: name={}, conditions count={}, actions count={}",
-                        payload.getName(), payload.getConditions().size(), payload.getActions().size());
+                log.debug("Mapped SCENARIO_ADDED: name={}, conditions={}, actions={}", payload.getName(), payload.getConditions().size(), payload.getActions().size());
             }
             case SCENARIO_REMOVED -> {
                 var p = request.getScenarioRemoved();
@@ -187,31 +163,11 @@ public class AvroEventMapper {
         if (dto instanceof ScenarioAddedEventDto e) {
             ScenarioAddedEventAvro payload = new ScenarioAddedEventAvro();
             payload.setName(e.getName());
-
-            List<ScenarioConditionAvro> conditions = new ArrayList<>();
-            for (ScenarioConditionDto c : e.getConditions()) {
-                ScenarioConditionAvro cond = new ScenarioConditionAvro();
-                cond.setSensorId(c.sensorId());
-                cond.setType(mapConditionType(c.type()));
-                cond.setOperation(mapConditionOperation(c.operation()));
-                cond.setValue(c.value());
-                conditions.add(cond);
-            }
-            payload.setConditions(conditions);
-
-            List<DeviceActionAvro> actions = new ArrayList<>();
-            for (DeviceActionDto a : e.getActions()) {
-                DeviceActionAvro action = new DeviceActionAvro();
-                action.setSensorId(a.sensorId());
-                action.setType(mapActionType(a.type()));
-                action.setValue(a.value() != null ? a.value() : 0);
-                actions.add(action);
-            }
-            payload.setActions(actions);
-
+            log.debug("ScenarioAddedEventDto: name={}, conditions count={}, actions count={}", e.getName(), e.getConditions().size(), e.getActions().size());
+            payload.setConditions(new ArrayList<>());
+            payload.setActions(new ArrayList<>());
             avro.setPayload(payload);
-            log.debug("Mapped ScenarioAddedEventDto: name={}, conditions count={}, actions count={}",
-                    payload.getName(), payload.getConditions().size(), payload.getActions().size());
+            log.debug("Mapped ScenarioAddedEventDto: name={} (empty lists)", payload.getName());
             return avro;
         }
 
@@ -227,16 +183,20 @@ public class AvroEventMapper {
     }
 
     private List<ScenarioConditionAvro> mapConditions(List<ScenarioConditionProto> conditions) {
+        log.debug("Mapping conditions, size={}", conditions.size());
         List<ScenarioConditionAvro> out = new ArrayList<>(conditions.size());
 
         for (ScenarioConditionProto c : conditions) {
+            log.debug("Condition proto: sensorId={}", c.getSensorId());
             ScenarioConditionAvro a = new ScenarioConditionAvro();
             a.setSensorId(c.getSensorId());
 
             ConditionProto cond = c.getCondition();
             a.setType(mapConditionType(cond.getType()));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            a.setValue(mapConditionValue(cond));
+            Object value = mapConditionValue(cond);
+            a.setValue(value);
+            log.debug("Condition mapped: type={}, operation={}, value={} ({})", a.getType(), a.getOperation(), value, value != null ? value.getClass().getSimpleName() : "null");
 
             out.add(a);
         }
@@ -245,15 +205,18 @@ public class AvroEventMapper {
     }
 
     private List<DeviceActionAvro> mapActions(List<ScenarioActionProto> actions) {
+        log.debug("Mapping actions, size={}", actions.size());
         List<DeviceActionAvro> out = new ArrayList<>(actions.size());
 
         for (ScenarioActionProto act : actions) {
+            log.debug("Action proto: sensorId={}", act.getSensorId());
             DeviceActionAvro a = new DeviceActionAvro();
             a.setSensorId(act.getSensorId());
 
             DeviceActionProto proto = act.getAction();
             a.setType(mapActionType(proto.getType()));
             a.setValue(proto.getValue());
+            log.debug("Action mapped: type={}, value={}", a.getType(), a.getValue());
 
             out.add(a);
         }
@@ -266,6 +229,7 @@ public class AvroEventMapper {
     }
 
     private DeviceTypeAvro mapDeviceType(DeviceTypeProto t) {
+        log.debug("Mapping device type proto: {}", t);
         return switch (t) {
             case TEMPERATURE_SENSOR -> DeviceTypeAvro.TEMPERATURE_SENSOR;
             case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
@@ -277,6 +241,7 @@ public class AvroEventMapper {
     }
 
     private DeviceTypeAvro mapDeviceType(String s) {
+        log.debug("Mapping device type string: {}", s);
         if (s == null || s.isBlank()) return null;
 
         return switch (s) {
@@ -290,6 +255,7 @@ public class AvroEventMapper {
     }
 
     private ConditionTypeAvro mapConditionType(ConditionTypeProto t) {
+        log.debug("Mapping condition type proto: {}", t);
         return switch (t) {
             case MOTION -> ConditionTypeAvro.MOTION;
             case TEMPERATURE -> ConditionTypeAvro.TEMPERATURE;
@@ -302,6 +268,7 @@ public class AvroEventMapper {
     }
 
     private ConditionOperationAvro mapConditionOperation(ConditionOperationProto op) {
+        log.debug("Mapping condition operation proto: {}", op);
         return switch (op) {
             case EQUALS -> ConditionOperationAvro.EQUALS;
             case GREATER_THAN -> ConditionOperationAvro.GREATER_THAN;
@@ -311,14 +278,17 @@ public class AvroEventMapper {
     }
 
     private Object mapConditionValue(ConditionProto cond) {
-        return switch (cond.getValueCase()) {
+        Object value = switch (cond.getValueCase()) {
             case INT_VALUE -> cond.getIntValue();
             case BOOL_VALUE -> cond.getBoolValue();
             case VALUE_NOT_SET -> null;
         };
+        log.debug("Mapping condition value: case={}, value={}", cond.getValueCase(), value);
+        return value;
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
+        log.debug("Mapping action type proto: {}", t);
         return switch (t) {
             case ACTIVATE -> ActionTypeAvro.ACTIVATE;
             case DEACTIVATE -> ActionTypeAvro.DEACTIVATE;
@@ -333,6 +303,7 @@ public class AvroEventMapper {
         a.setLinkQuality(e.linkQuality());
         a.setMotion(e.motion());
         a.setVoltage(e.voltage());
+        log.debug("MotionSensorDto mapped: linkQuality={}, motion={}, voltage={}", e.linkQuality(), e.motion(), e.voltage());
         return a;
     }
 
@@ -340,6 +311,7 @@ public class AvroEventMapper {
         TemperatureSensorAvro a = new TemperatureSensorAvro();
         a.setTemperatureC(e.temperatureC());
         a.setTemperatureF(e.temperatureF());
+        log.debug("TemperatureSensorDto mapped: temperatureC={}, temperatureF={}", e.temperatureC(), e.temperatureF());
         return a;
     }
 
@@ -347,6 +319,7 @@ public class AvroEventMapper {
         LightSensorAvro a = new LightSensorAvro();
         a.setLinkQuality(e.linkQuality());
         a.setLuminosity(e.luminosity());
+        log.debug("LightSensorDto mapped: linkQuality={}, luminosity={}", e.linkQuality(), e.luminosity());
         return a;
     }
 
@@ -355,12 +328,14 @@ public class AvroEventMapper {
         a.setTemperatureC(e.temperatureC());
         a.setHumidity(e.humidity());
         a.setCo2Level(e.co2Level());
+        log.debug("ClimateSensorDto mapped: temperatureC={}, humidity={}, co2Level={}", e.temperatureC(), e.humidity(), e.co2Level());
         return a;
     }
 
     private SwitchSensorAvro sw(SwitchSensorEventDto e) {
         SwitchSensorAvro a = new SwitchSensorAvro();
         a.setState(e.state());
+        log.debug("SwitchSensorDto mapped: state={}", e.state());
         return a;
     }
 }
