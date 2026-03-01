@@ -41,33 +41,25 @@ message ScenarioRemovedEventProto {
 
 message ScenarioConditionProto {
   string sensor_id = 1;
-  ConditionProto condition = 2;
+  ConditionTypeProto type = 2;
+  ConditionOperationProto operation = 3;
+
+  oneof value {
+    int32 int_value = 4;
+    bool bool_value = 5;
+  }
 }
 
 message ScenarioActionProto {
   string sensor_id = 1;
-  DeviceActionProto action = 2;
-}
-
-message ConditionProto {
-  ConditionTypeProto type = 1;
-  ConditionOperationProto operation = 2;
-
-  oneof value {
-    int32 int_value = 3;
-    bool bool_value = 4;
-  }
-}
-
-message DeviceActionProto {
-  ActionTypeProto type = 1;
-  int32 value = 2;
+  ActionTypeProto type = 2;
+  int32 value = 3;
 }
 
 message DeviceActionRequest {
   string hub_id = 1;
   string scenario_name = 2;
-  DeviceActionProto action = 3;
+  ScenarioActionProto action = 3;
   google.protobuf.Timestamp timestamp = 4;
 }
 
