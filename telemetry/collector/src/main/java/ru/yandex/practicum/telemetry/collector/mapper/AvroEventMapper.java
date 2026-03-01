@@ -26,7 +26,7 @@ public class AvroEventMapper {
         SensorEventAvro avro = new SensorEventAvro();
         avro.setId(dto.getId());
         avro.setHubId(dto.getHubId());
-        avro.setTimestamp(toInstant(dto.getTimestamp()));
+        avro.setTimestamp(dto.getTimestamp());
         avro.setPayload(payload);
         return avro;
     }
@@ -124,7 +124,7 @@ public class AvroEventMapper {
     public HubEventAvro toHubEventAvro(HubEventDto dto) {
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(dto.getHubId());
-        avro.setTimestamp(toInstant(dto.getTimestamp()));
+        avro.setTimestamp(dto.getTimestamp());
 
         if (dto instanceof DeviceAddedEventDto e) {
             DeviceAddedEventAvro payload = new DeviceAddedEventAvro();
