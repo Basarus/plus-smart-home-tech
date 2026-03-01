@@ -74,7 +74,6 @@ public class AvroEventMapper {
                 var p = request.getTemperatureSensor();
                 TemperatureSensorAvro a = new TemperatureSensorAvro();
                 a.setTemperatureC(p.getTemperatureC());
-                a.setLinkQuality(0);
                 yield a;
             }
             case LIGHT_SENSOR -> {
