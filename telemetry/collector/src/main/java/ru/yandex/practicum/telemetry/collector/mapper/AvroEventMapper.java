@@ -78,7 +78,6 @@ public class AvroEventMapper {
                 var p = request.getTemperatureSensor();
                 TemperatureSensorAvro a = new TemperatureSensorAvro();
                 a.setTemperatureC(p.getTemperatureC());
-                a.setLinkQuality(a.getLinkQuality());
                 yield a;
             }
             case LIGHT_SENSOR -> {
@@ -93,15 +92,13 @@ public class AvroEventMapper {
                 ClimateSensorAvro a = new ClimateSensorAvro();
                 a.setTemperatureC(p.getTemperatureC());
                 a.setHumidity(p.getHumidity());
-                a.setCo2(a.getCo2());
-                a.setLinkQuality(a.getLinkQuality());
+                a.setCo2(p.getCo2Level());
                 yield a;
             }
             case SWITCH_SENSOR -> {
                 var p = request.getSwitchSensor();
                 SwitchSensorAvro a = new SwitchSensorAvro();
                 a.setState(p.getState());
-                a.setLinkQuality(a.getLinkQuality());
                 yield a;
             }
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
@@ -218,7 +215,7 @@ public class AvroEventMapper {
             ConditionProto cond = c.getCondition();
             a.setType(mapConditionType(cond.getType()));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            a.setValue(a.getValue());
+            a.setValue(c.getCondition().getIntValue());
             out.add(a);
         }
         return out;
