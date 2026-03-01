@@ -70,7 +70,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>${start-class}</mainClass>
+                    <mainClass>ru.yandex.practicum.telemetry.collector.Collector</mainClass>
                 </configuration>
             </plugin>
         </plugins>
