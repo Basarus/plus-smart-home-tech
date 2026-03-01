@@ -170,10 +170,10 @@ public class AvroEventMapper {
             DeviceActionAvro a = new DeviceActionAvro();
 
             a.setSensorId(proto.getSensorId());
-            a.setType(mapActionType(proto.getType()));
+            a.setType(mapActionType(proto.getAction().getType()));
 
-            if (proto.getType() == ActionTypeProto.SET_VALUE) {
-                a.setValue(proto.getValue());
+            if (proto.getAction().getType() == ActionTypeProto.SET_VALUE) {
+                a.setValue(proto.getAction().getValue());
             } else {
                 a.setValue(0);
             }
