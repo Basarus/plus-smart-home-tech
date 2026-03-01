@@ -59,16 +59,13 @@ message ScenarioActionProto {
 message DeviceActionRequest {
   string hub_id = 1;
   string scenario_name = 2;
-  ScenarioActionProto action = 3;
+  DeviceActionProto action = 3;
   google.protobuf.Timestamp timestamp = 4;
 }
 
-enum DeviceTypeProto {
-  MOTION_SENSOR = 0;
-  TEMPERATURE_SENSOR = 1;
-  LIGHT_SENSOR = 2;
-  CLIMATE_SENSOR = 3;
-  SWITCH_SENSOR = 4;
+message DeviceActionProto {
+  ActionTypeProto type = 1;
+  int32 value = 2;
 }
 
 enum ConditionTypeProto {
