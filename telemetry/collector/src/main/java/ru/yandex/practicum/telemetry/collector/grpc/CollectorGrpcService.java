@@ -73,7 +73,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                 a.setState(p.getSwitchSensor().getState());
                 yield a;
             }
-            case PAYLOAD_NOT_SET, UNRECOGNIZED -> throw new IllegalArgumentException("Sensor payload is not set");
+            default -> throw new IllegalArgumentException("Unsupported payload: " + p.getPayloadCase());
         };
 
         avro.setPayload(payload);
