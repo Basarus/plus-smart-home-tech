@@ -17,6 +17,7 @@ public class AvroEventMapper {
 
     public SensorEventAvro toAvro(SensorEventDto dto) {
         log.debug("Mapping SensorEventDto: type={}, id={}, hubId={}", dto.getClass().getSimpleName(), dto.getId(), dto.getHubId());
+
         Object payload = switch (dto) {
             case MotionSensorEventDto e -> motion(e);
             case TemperatureSensorEventDto e -> temperature(e);
@@ -29,18 +30,20 @@ public class AvroEventMapper {
         SensorEventAvro avro = new SensorEventAvro();
         avro.setId(dto.getId());
         avro.setHubId(dto.getHubId());
-        avro.setTimestamp(dto.getTimestamp());
+        avro.setTimestamp(dto.getTimestamp().toEpochMilli());
         avro.setPayload(payload);
+
         log.debug("Mapped SensorEventAvro: id={}, hubId={}, payloadType={}", avro.getId(), avro.getHubId(), payload.getClass().getSimpleName());
         return avro;
     }
 
     public SensorEventAvro toAvro(SensorEventProto request) {
         log.debug("Mapping SensorEventProto: id={}, hubId={}, payloadCase={}", request.getId(), request.getHubId(), request.getPayloadCase());
+
         SensorEventAvro avro = new SensorEventAvro();
         avro.setId(request.getId());
         avro.setHubId(request.getHubId());
-        avro.setTimestamp(toInstant(request.getTimestamp()));
+        avro.setTimestamp(toInstant(request.getTimestamp()).toEpochMilli());
 
         Object payload = switch (request.getPayloadCase()) {
             case MOTION_SENSOR -> {
@@ -83,15 +86,17 @@ public class AvroEventMapper {
         };
 
         avro.setPayload(payload);
+
         log.debug("Mapped SensorEventAvro from proto: id={}, hubId={}, payloadType={}", avro.getId(), avro.getHubId(), payload.getClass().getSimpleName());
         return avro;
     }
 
     public HubEventAvro toHubEventAvro(HubEventProto request) {
         log.debug("Mapping HubEventProto: hubId={}, payloadCase={}", request.getHubId(), request.getPayloadCase());
+
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(request.getHubId());
-        avro.setTimestamp(toInstant(request.getTimestamp()));
+        avro.setTimestamp(toInstant(request.getTimestamp()).toEpochMilli());
 
         switch (request.getPayloadCase()) {
             case DEVICE_ADDED -> {
@@ -113,11 +118,18 @@ public class AvroEventMapper {
                 var p = request.getScenarioAdded();
                 ScenarioAddedEventAvro payload = new ScenarioAddedEventAvro();
                 payload.setName(p.getName());
+
                 log.debug("SCENARIO_ADDED: name={}, conditions count={}, actions count={}", p.getName(), p.getConditionsList().size(), p.getActionsList().size());
-                payload.setConditions(mapConditions(p.getConditionsList()));
-                payload.setActions(mapDeviceActionsFromProto(p.getActionsList()));
+
+                List<ScenarioConditionAvro> conditions = mapConditions(p.getConditionsList());
+                List<DeviceActionAvro> actions = mapDeviceActionsFromProto(p.getActionsList());
+
+                payload.setConditions(conditions);
+                payload.setActions(actions);
+
                 avro.setPayload(payload);
-                log.debug("Mapped SCENARIO_ADDED: name={}, conditions={}, actions={}", payload.getName(), payload.getConditions().size(), payload.getActions().size());
+
+                log.debug("Mapped SCENARIO_ADDED: name={}, conditions={}, actions={}", payload.getName(), conditions.size(), actions.size());
             }
             case SCENARIO_REMOVED -> {
                 var p = request.getScenarioRemoved();
@@ -135,9 +147,10 @@ public class AvroEventMapper {
 
     public HubEventAvro toHubEventAvro(HubEventDto dto) {
         log.debug("Mapping HubEventDto: type={}, hubId={}", dto.getClass().getSimpleName(), dto.getHubId());
+
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(dto.getHubId());
-        avro.setTimestamp(dto.getTimestamp());
+        avro.setTimestamp(dto.getTimestamp().toEpochMilli());
 
         if (dto instanceof DeviceAddedEventDto e) {
             DeviceAddedEventAvro payload = new DeviceAddedEventAvro();
@@ -159,6 +172,7 @@ public class AvroEventMapper {
         if (dto instanceof ScenarioAddedEventDto e) {
             ScenarioAddedEventAvro payload = new ScenarioAddedEventAvro();
             payload.setName(e.getName());
+
             log.debug("ScenarioAddedEventDto: name={}, conditions count={}, actions count={}", e.getName(), e.getConditions().size(), e.getActions().size());
 
             List<ScenarioConditionAvro> conditions = new ArrayList<>();
@@ -167,9 +181,8 @@ public class AvroEventMapper {
                 cond.setSensorId(c.sensorId());
                 cond.setType(mapConditionType(c.type()));
                 cond.setOperation(mapConditionOperation(c.operation()));
-                cond.setValue(c.value());
+                cond.setValue(c.value() != null ? c.value() : 0);
                 conditions.add(cond);
-                log.debug("Condition: sensorId={}, type={}, operation={}, value={}", c.sensorId(), c.type(), c.operation(), c.value());
             }
             payload.setConditions(conditions);
 
@@ -180,12 +193,12 @@ public class AvroEventMapper {
                 action.setType(mapActionType(a.type()));
                 action.setValue(a.value() != null ? a.value() : 0);
                 actions.add(action);
-                log.debug("Action: sensorId={}, type={}, value={}", a.sensorId(), a.type(), a.value());
             }
             payload.setActions(actions);
 
             avro.setPayload(payload);
-            log.debug("Mapped ScenarioAddedEventDto: name={}, conditions={}, actions={}", payload.getName(), payload.getConditions().size(), payload.getActions().size());
+
+            log.debug("Mapped ScenarioAddedEventDto: name={}, conditions={}, actions={}", payload.getName(), conditions.size(), actions.size());
             return avro;
         }
 
@@ -202,21 +215,22 @@ public class AvroEventMapper {
 
     private List<ScenarioConditionAvro> mapConditions(List<ScenarioConditionProto> conditions) {
         log.debug("Mapping conditions, size={}", conditions.size());
+
         List<ScenarioConditionAvro> out = new ArrayList<>(conditions.size());
 
         for (ScenarioConditionProto c : conditions) {
-            log.debug("Condition proto: sensorId={}", c.getSensorId());
             ScenarioConditionAvro a = new ScenarioConditionAvro();
             a.setSensorId(c.getSensorId());
 
             ConditionProto cond = c.getCondition();
+
             a.setType(mapConditionType(cond.getType()));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            Object value = mapConditionValue(cond);
-            a.setValue(value);
-            log.debug("Condition mapped: type={}, operation={}, value={} ({})", a.getType(), a.getOperation(), value, value != null ? value.getClass().getSimpleName() : "null");
+            a.setValue(mapConditionValueAsInt(cond));
 
             out.add(a);
+
+            log.debug("Condition mapped: sensorId={}, type={}, operation={}, value={}", a.getSensorId(), a.getType(), a.getOperation(), a.getValue());
         }
 
         return out;
@@ -224,22 +238,31 @@ public class AvroEventMapper {
 
     private List<DeviceActionAvro> mapDeviceActionsFromProto(List<ScenarioActionProto> actions) {
         log.debug("Mapping actions, size={}", actions.size());
+
         List<DeviceActionAvro> out = new ArrayList<>(actions.size());
 
         for (ScenarioActionProto act : actions) {
-            log.debug("Action proto: sensorId={}", act.getSensorId());
             DeviceActionAvro a = new DeviceActionAvro();
             a.setSensorId(act.getSensorId());
 
             DeviceActionProto proto = act.getAction();
             a.setType(mapActionType(proto.getType()));
             a.setValue(proto.getValue());
-            log.debug("Action mapped: type={}, value={}", a.getType(), a.getValue());
 
             out.add(a);
+
+            log.debug("Action mapped: sensorId={}, type={}, value={}", a.getSensorId(), a.getType(), a.getValue());
         }
 
         return out;
+    }
+
+    private int mapConditionValueAsInt(ConditionProto cond) {
+        return switch (cond.getValueCase()) {
+            case INT_VALUE -> cond.getIntValue();
+            case BOOL_VALUE -> cond.getBoolValue() ? 1 : 0;
+            case VALUE_NOT_SET -> 0;
+        };
     }
 
     private Instant toInstant(com.google.protobuf.Timestamp ts) {
@@ -288,6 +311,7 @@ public class AvroEventMapper {
     private ConditionTypeAvro mapConditionType(String t) {
         log.debug("Mapping condition type string: {}", t);
         if (t == null || t.isBlank()) return null;
+
         return switch (t) {
             case "MOTION" -> ConditionTypeAvro.MOTION;
             case "TEMPERATURE" -> ConditionTypeAvro.TEMPERATURE;
@@ -312,22 +336,13 @@ public class AvroEventMapper {
     private ConditionOperationAvro mapConditionOperation(String op) {
         log.debug("Mapping condition operation string: {}", op);
         if (op == null || op.isBlank()) return null;
+
         return switch (op) {
             case "EQUALS" -> ConditionOperationAvro.EQUALS;
             case "GREATER_THAN" -> ConditionOperationAvro.GREATER_THAN;
             case "LOWER_THAN" -> ConditionOperationAvro.LOWER_THAN;
             default -> throw new IllegalArgumentException("Unsupported condition operation: " + op);
         };
-    }
-
-    private Object mapConditionValue(ConditionProto cond) {
-        Object value = switch (cond.getValueCase()) {
-            case INT_VALUE -> cond.getIntValue();
-            case BOOL_VALUE -> cond.getBoolValue();
-            case VALUE_NOT_SET -> null;
-        };
-        log.debug("Mapping condition value: case={}, value={}", cond.getValueCase(), value);
-        return value;
     }
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
@@ -344,6 +359,7 @@ public class AvroEventMapper {
     private ActionTypeAvro mapActionType(String t) {
         log.debug("Mapping action type string: {}", t);
         if (t == null || t.isBlank()) return null;
+
         return switch (t) {
             case "ACTIVATE" -> ActionTypeAvro.ACTIVATE;
             case "DEACTIVATE" -> ActionTypeAvro.DEACTIVATE;
