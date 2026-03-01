@@ -123,7 +123,6 @@ public class AvroEventMapper {
             case LIGHT_SENSOR -> DeviceTypeAvro.LIGHT_SENSOR;
             case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
             case HUMIDITY_SENSOR -> DeviceTypeAvro.CLIMATE_SENSOR;
-
             default -> throw new IllegalArgumentException("Unsupported device type for Avro: " + t);
         };
     }
@@ -181,9 +180,7 @@ public class AvroEventMapper {
         return switch (t) {
             case MOTION -> ConditionTypeAvro.MOTION;
             case TEMPERATURE -> ConditionTypeAvro.TEMPERATURE;
-            case HUMIDITY -> ConditionTypeAvro.HUMIDITY;
             case ILLUMINATION -> ConditionTypeAvro.LIGHT;
-            case SWITCH -> ConditionTypeAvro.SWITCH;
             default -> throw new IllegalArgumentException("Unsupported condition type: " + t);
         };
     }
