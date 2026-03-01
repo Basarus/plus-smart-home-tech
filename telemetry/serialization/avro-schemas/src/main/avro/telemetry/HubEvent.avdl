@@ -1,22 +1,22 @@
 @namespace("ru.yandex.practicum.kafka.telemetry.event")
 protocol HubEventProtocol {
 
-  enum DeviceTypeAvro {
-    MOTION_SENSOR,
-    TEMPERATURE_SENSOR,
-    LIGHT_SENSOR,
-    CLIMATE_SENSOR,
-    SWITCH_SENSOR
-  }
+enum DeviceTypeAvro {
+  MOTION_SENSOR,
+  TEMPERATURE_SENSOR,
+  LIGHT_SENSOR,
+  CLIMATE_SENSOR,
+  SWITCH_SENSOR
+}
 
-  enum ConditionTypeAvro {
-    MOTION,
-    LUMINOSITY,
-    SWITCH,
-    TEMPERATURE,
-    CO2LEVEL,
-    HUMIDITY
-  }
+enum ConditionTypeAvro {
+  MOTION,
+  LUMINOSITY,
+  SWITCH,
+  TEMPERATURE,
+  CO2LEVEL,
+  HUMIDITY
+}
 
   enum ConditionOperationAvro {
     EQUALS,

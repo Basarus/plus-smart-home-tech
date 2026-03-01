@@ -5,6 +5,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.telemetry.analyzer.config.AnalyzerKafkaProperties;
 import ru.yandex.practicum.telemetry.analyzer.service.HubEventService;
 
@@ -33,7 +34,15 @@ public class HubEventProcessor implements Runnable {
         try {
             while (running.get()) {
                 ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(props.consumers().hubEvents().pollTimeoutMs()));
-                records.forEach(r -> hubEventService.handle(r.value()));
+
+                for (var r : records) {
+                    HubEventAvro event = avroDeserializer.deserialize(r.value(), HubEventAvro.class);
+                    if (event != null) {
+                        hubEventService.handle(event);
+                    }
+                }
+
+                consumer.commitSync();
             }
         } catch (WakeupException e) {
             if (running.get()) throw e;

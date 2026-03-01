@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.analyzer.model.*;
 import ru.yandex.practicum.telemetry.analyzer.repo.*;
-import ru.yandex.practicum.telemetry.analyzer.serialization.SpecificAvroDeserializer;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,41 +17,32 @@ public class HubEventService {
     private final ActionRepository actionRepository;
     private final ScenarioConditionRepository scenarioConditionRepository;
     private final ScenarioActionRepository scenarioActionRepository;
-    private final SpecificAvroDeserializer avroDeserializer;
 
-    public HubEventService(ScenarioRepository scenarioRepository,
-                           SensorRepository sensorRepository,
-                           ConditionRepository conditionRepository,
-                           ActionRepository actionRepository,
-                           ScenarioConditionRepository scenarioConditionRepository,
-                           ScenarioActionRepository scenarioActionRepository,
-                           SpecificAvroDeserializer avroDeserializer) {
+    public HubEventService(ScenarioRepository scenarioRepository, SensorRepository sensorRepository, ConditionRepository conditionRepository, ActionRepository actionRepository, ScenarioConditionRepository scenarioConditionRepository, ScenarioActionRepository scenarioActionRepository) {
         this.scenarioRepository = scenarioRepository;
         this.sensorRepository = sensorRepository;
         this.conditionRepository = conditionRepository;
         this.actionRepository = actionRepository;
         this.scenarioConditionRepository = scenarioConditionRepository;
         this.scenarioActionRepository = scenarioActionRepository;
-        this.avroDeserializer = avroDeserializer;
     }
 
     @Transactional
-    public void handle(byte[] payload) {
-        HubEventAvro event = avroDeserializer.deserialize(payload, HubEventAvro.class);
-        Object eventPayload = event.getPayload();
-        if (eventPayload instanceof DeviceAddedEventAvro p) {
+    public void handle(HubEventAvro event) {
+        Object payload = event.getPayload();
+        if (payload instanceof DeviceAddedEventAvro p) {
             handleDeviceAdded(event.getHubId().toString(), p);
             return;
         }
-        if (eventPayload instanceof DeviceRemovedEventAvro p) {
+        if (payload instanceof DeviceRemovedEventAvro p) {
             handleDeviceRemoved(event.getHubId().toString(), p);
             return;
         }
-        if (eventPayload instanceof ScenarioAddedEventAvro p) {
+        if (payload instanceof ScenarioAddedEventAvro p) {
             handleScenarioAdded(event.getHubId().toString(), p);
             return;
         }
-        if (eventPayload instanceof ScenarioRemovedEventAvro p) {
+        if (payload instanceof ScenarioRemovedEventAvro p) {
             handleScenarioRemoved(event.getHubId().toString(), p);
         }
     }
@@ -79,8 +69,7 @@ public class HubEventService {
 
     private void handleScenarioAdded(String hubId, ScenarioAddedEventAvro p) {
         String name = p.getName().toString();
-        Scenario scenario = scenarioRepository.findByHubIdAndName(hubId, name)
-                .orElseGet(() -> scenarioRepository.save(new Scenario(hubId, name)));
+        Scenario scenario = scenarioRepository.findByHubIdAndName(hubId, name).orElseGet(() -> scenarioRepository.save(new Scenario(hubId, name)));
 
         scenarioConditionRepository.deleteByIdScenarioId(scenario.getId());
         scenarioActionRepository.deleteByIdScenarioId(scenario.getId());
@@ -89,16 +78,9 @@ public class HubEventService {
         if (conditions != null) {
             for (ScenarioConditionAvro c : conditions) {
                 String sensorId = c.getSensorId().toString();
-                Sensor sensor = sensorRepository.findByIdAndHubId(sensorId, hubId)
-                        .orElseGet(() -> sensorRepository.save(new Sensor(sensorId, hubId)));
+                Sensor sensor = sensorRepository.findByIdAndHubId(sensorId, hubId).orElseGet(() -> sensorRepository.save(new Sensor(sensorId, hubId)));
 
-                Integer value = toIntValue(c.getValue());
-
-                Condition cond = conditionRepository.save(new Condition(
-                        String.valueOf(c.getType()),
-                        String.valueOf(c.getOperation()),
-                        value
-                ));
+                Condition cond = conditionRepository.save(new Condition(String.valueOf(c.getType()), String.valueOf(c.getOperation()), toInteger(c.getValue())));
 
                 scenarioConditionRepository.save(new ScenarioCondition(scenario, sensor, cond));
             }
@@ -108,22 +90,28 @@ public class HubEventService {
         if (actions != null) {
             for (DeviceActionAvro a : actions) {
                 String sensorId = a.getSensorId().toString();
-                Sensor sensor = sensorRepository.findByIdAndHubId(sensorId, hubId)
-                        .orElseGet(() -> sensorRepository.save(new Sensor(sensorId, hubId)));
+                Sensor sensor = sensorRepository.findByIdAndHubId(sensorId, hubId).orElseGet(() -> sensorRepository.save(new Sensor(sensorId, hubId)));
 
-                Action act = actionRepository.save(new Action(String.valueOf(a.getType()), a.getValue()));
+                Action act = actionRepository.save(new Action(String.valueOf(a.getType()), toInteger(a.getValue())));
                 scenarioActionRepository.save(new ScenarioAction(scenario, sensor, act));
             }
         }
     }
 
-    private Integer toIntValue(Object value) {
-        if (value == null) return null;
-        if (value instanceof Integer i) return i;
-        if (value instanceof Long l) return Math.toIntExact(l);
-        if (value instanceof Boolean b) return b ? 1 : 0;
-        if (value instanceof CharSequence cs) return Integer.parseInt(cs.toString());
-        return null;
+    private static Integer toInteger(Object v) {
+        if (v == null) return null;
+        if (v instanceof Integer i) return i;
+        if (v instanceof Long l) return l.intValue();
+        if (v instanceof Short s) return (int) s;
+        if (v instanceof Byte b) return (int) b;
+        if (v instanceof Boolean b) return b ? 1 : 0;
+        if (v instanceof CharSequence cs) {
+            String s = cs.toString();
+            if (s.isBlank()) return null;
+            return Integer.parseInt(s);
+        }
+        if (v instanceof Number n) return n.intValue();
+        throw new IllegalArgumentException("Unsupported value type: " + v.getClass());
     }
 
     private void handleScenarioRemoved(String hubId, ScenarioRemovedEventAvro p) {
