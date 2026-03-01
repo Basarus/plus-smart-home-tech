@@ -12,7 +12,7 @@ public class HubEventProtoMapper {
     public HubEventProto toProto(HubEventDto dto) {
         HubEventProto.Builder b = HubEventProto.newBuilder()
                 .setHubId(dto.getHubId())
-                .setTimestamp(toTs(dto.getTimestamp()));
+                .setTimestamp(toTs(toInstant(dto.getTimestamp())));
 
         if (dto instanceof DeviceAddedEventDto e) {
             b.setDeviceAdded(DeviceAddedEventProto.newBuilder()
@@ -59,4 +59,8 @@ public class HubEventProtoMapper {
             default -> throw new IllegalArgumentException("Unsupported device type: " + s);
         };
     }
+    private Instant toInstant(com.google.protobuf.Timestamp ts) {
+        return Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos());
+    }
+
 }
