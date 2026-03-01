@@ -92,10 +92,12 @@ public class HubEventService {
                 Sensor sensor = sensorRepository.findByIdAndHubId(sensorId, hubId)
                         .orElseGet(() -> sensorRepository.save(new Sensor(sensorId, hubId)));
 
+                Integer value = toIntValue(c.getValue());
+
                 Condition cond = conditionRepository.save(new Condition(
                         String.valueOf(c.getType()),
                         String.valueOf(c.getOperation()),
-                        c.getValue()
+                        value
                 ));
 
                 scenarioConditionRepository.save(new ScenarioCondition(scenario, sensor, cond));
@@ -113,6 +115,15 @@ public class HubEventService {
                 scenarioActionRepository.save(new ScenarioAction(scenario, sensor, act));
             }
         }
+    }
+
+    private Integer toIntValue(Object value) {
+        if (value == null) return null;
+        if (value instanceof Integer i) return i;
+        if (value instanceof Long l) return Math.toIntExact(l);
+        if (value instanceof Boolean b) return b ? 1 : 0;
+        if (value instanceof CharSequence cs) return Integer.parseInt(cs.toString());
+        return null;
     }
 
     private void handleScenarioRemoved(String hubId, ScenarioRemovedEventAvro p) {
