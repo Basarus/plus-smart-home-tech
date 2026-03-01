@@ -6,7 +6,6 @@ import "google/protobuf/timestamp.proto";
 
 option java_package = "ru.yandex.practicum.grpc.telemetry.message.event";
 option java_multiple_files = true;
-option java_outer_classname = "HubEventMessagesProto";
 
 message HubEventProto {
   string hub_id = 1;
@@ -81,17 +80,17 @@ enum DeviceTypeProto {
 }
 
 enum ConditionTypeProto {
-  TEMPERATURE = 0;
-  HUMIDITY = 1;
+  MOTION = 0;
+  TEMPERATURE = 1;
   ILLUMINATION = 2;
-  MOTION = 3;
+  HUMIDITY = 3;
   SWITCH = 4;
 }
 
 enum ConditionOperationProto {
-  LOWER_THAN = 0;
+  EQUALS = 0;
   GREATER_THAN = 1;
-  EQUALS = 2;
+  LOWER_THAN = 2;
 }
 
 enum ActionTypeProto {
