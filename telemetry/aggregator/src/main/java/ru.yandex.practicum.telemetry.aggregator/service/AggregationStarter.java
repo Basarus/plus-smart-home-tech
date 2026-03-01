@@ -31,9 +31,9 @@ public class AggregationStarter {
 
     public void start() {
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
-        try {
-            consumer.subscribe(List.of(props.getTopics().getSensors()));
+        consumer.subscribe(List.of(props.getTopics().getSensors()));
 
+        try {
             while (running.get()) {
                 ConsumerRecords<String, SensorEventAvro> records =
                         consumer.poll(Duration.ofMillis(props.getKafka().getPollTimeoutMs()));
@@ -43,15 +43,23 @@ public class AggregationStarter {
                 records.forEach(r -> processEvent(r.value()));
 
                 try {
-                    consumer.commitSync();
+                    producer.flush();
                 } catch (Exception e) {
-                    log.warn("commitSync failed", e);
+                    log.warn("producer.flush failed", e);
+                }
+
+                if (!props.getKafka().isEnableAutoCommit()) {
+                    try {
+                        consumer.commitSync();
+                    } catch (Exception e) {
+                        log.warn("commitSync failed", e);
+                    }
                 }
             }
         } catch (WakeupException e) {
             if (running.get()) throw e;
         } catch (Exception e) {
-            log.error("Aggregation loop crashed", e);
+            log.error("Ошибка во время обработки событий от датчиков", e);
         } finally {
             try {
                 try {
@@ -59,10 +67,12 @@ public class AggregationStarter {
                 } catch (Exception e) {
                     log.warn("producer.flush failed", e);
                 }
-                try {
-                    consumer.commitSync();
-                } catch (Exception e) {
-                    log.warn("final commitSync failed", e);
+                if (!props.getKafka().isEnableAutoCommit()) {
+                    try {
+                        consumer.commitSync();
+                    } catch (Exception e) {
+                        log.warn("final commitSync failed", e);
+                    }
                 }
             } finally {
                 try {

@@ -14,10 +14,14 @@
     <artifactId>aggregator</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <start-class>ru.yandex.practicum.telemetry.aggregator.AggregatorApplication</start-class>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
         <dependency>

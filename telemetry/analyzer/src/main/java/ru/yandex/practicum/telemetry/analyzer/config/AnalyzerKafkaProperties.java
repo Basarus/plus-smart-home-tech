@@ -6,8 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record AnalyzerKafkaProperties(
         String bootstrapServers,
         Topics topics,
-        Consumers consumers,
-        Snapshot snapshot
+        Consumers consumers
 ) {
     public record Topics(String hubs, String snapshots) {
     }
@@ -18,8 +17,5 @@ public record AnalyzerKafkaProperties(
 
         public record Snapshots(String groupId, int pollTimeoutMs, int maxPollRecords, boolean enableAutoCommit) {
         }
-    }
-
-    public record Snapshot(String valueClass) {
     }
 }

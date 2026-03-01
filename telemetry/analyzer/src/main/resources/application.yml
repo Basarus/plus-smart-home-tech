@@ -44,9 +44,6 @@ analyzer:
         max-poll-records: ${KAFKA_SNAP_MAX_POLL_RECORDS:200}
         enable-auto-commit: ${KAFKA_SNAP_ENABLE_AUTO_COMMIT:false}
 
-    snapshot:
-      value-class: ${KAFKA_SNAPSHOT_VALUE_CLASS:ru.yandex.practicum.kafka.telemetry.snapshot.HubSnapshotAvro}
-
 grpc:
   client:
     hub-router:

@@ -1,10 +1,6 @@
-server:
-  port: 59091
-  address: 0.0.0.0
-
 spring:
   main:
-    web-application-type: servlet
+    web-application-type: none
   application:
     name: aggregator
 

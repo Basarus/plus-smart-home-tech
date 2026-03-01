@@ -3,6 +3,7 @@ package ru.yandex.practicum.telemetry.analyzer.processor;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.telemetry.analyzer.config.AnalyzerKafkaProperties;
 import ru.yandex.practicum.telemetry.analyzer.service.HubEventService;
@@ -19,11 +20,7 @@ public class HubEventProcessor implements Runnable {
     private final HubEventService hubEventService;
     private final AtomicBoolean running = new AtomicBoolean(true);
 
-    public HubEventProcessor(
-            KafkaConsumer<String, byte[]> consumer,
-            AnalyzerKafkaProperties props,
-            HubEventService hubEventService
-    ) {
+    public HubEventProcessor(@Qualifier("hubEventsConsumer") KafkaConsumer<String, byte[]> consumer, AnalyzerKafkaProperties props, HubEventService hubEventService) {
         this.consumer = consumer;
         this.props = props;
         this.hubEventService = hubEventService;
@@ -32,10 +29,10 @@ public class HubEventProcessor implements Runnable {
 
     @Override
     public void run() {
-        consumer.subscribe(List.of(props.getTopics().getHubs()));
+        consumer.subscribe(List.of(props.topics().hubs()));
         try {
             while (running.get()) {
-                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(props.getPollTimeoutMs()));
+                ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(props.consumers().hubEvents().pollTimeoutMs()));
                 records.forEach(r -> hubEventService.handle(r.value()));
             }
         } catch (WakeupException e) {

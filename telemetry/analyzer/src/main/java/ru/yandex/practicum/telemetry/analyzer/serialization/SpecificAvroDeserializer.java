@@ -4,7 +4,9 @@ import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificRecordBase;
+import org.springframework.stereotype.Component;
 
+@Component
 public class SpecificAvroDeserializer {
     public <T extends SpecificRecordBase> T deserialize(byte[] data, Class<T> clazz) {
         try {

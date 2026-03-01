@@ -1,75 +1,132 @@
 package ru.yandex.practicum.telemetry.analyzer.service;
 
 import com.google.protobuf.Timestamp;
-import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc.HubRouterControllerBlockingStub;
-import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.ActionTypeProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.DeviceActionProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.DeviceActionRequest;
+import ru.yandex.practicum.kafka.telemetry.event.*;
+import ru.yandex.practicum.telemetry.analyzer.grpc.HubRouterClient;
+import ru.yandex.practicum.telemetry.analyzer.serialization.SpecificAvroDeserializer;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class ScenarioEngine {
 
-    private final HubRouterControllerBlockingStub hubRouterClient;
+    private final SpecificAvroDeserializer avroDeserializer;
     private final ScenarioRuntimeLoader runtimeLoader;
+    private final HubRouterClient hubRouterClient;
 
     public ScenarioEngine(
-            @GrpcClient("hub-router") HubRouterControllerBlockingStub hubRouterClient,
-            ScenarioRuntimeLoader runtimeLoader
+            SpecificAvroDeserializer avroDeserializer,
+            ScenarioRuntimeLoader runtimeLoader,
+            HubRouterClient hubRouterClient
     ) {
-        this.hubRouterClient = hubRouterClient;
+        this.avroDeserializer = avroDeserializer;
         this.runtimeLoader = runtimeLoader;
+        this.hubRouterClient = hubRouterClient;
     }
 
-    public void handleSnapshot(Object snapshotAvro) {
-        SnapshotView snapshot = SnapshotView.from(snapshotAvro);
-        String hubId = snapshot.hubId();
-        Map<String, Integer> sensorValues = snapshot.sensorValues();
+    public void handleSnapshot(byte[] payload) {
+        SensorsSnapshotAvro snapshot = avroDeserializer.deserialize(payload, SensorsSnapshotAvro.class);
+        String hubId = snapshot.getHubId() == null ? null : snapshot.getHubId().toString();
+        if (hubId == null || hubId.isBlank()) return;
 
-        List<ScenarioRuntime> scenarios = runtimeLoader.loadScenarioRuntime(hubId);
+        List<ScenarioRuntime> scenarios = runtimeLoader.loadByHubId(hubId);
         if (scenarios.isEmpty()) return;
 
-        scenarios.stream()
-                .filter(sc -> predicatesOk(sc, sensorValues))
-                .flatMap(sc -> sc.actions().stream().map(a -> toRequest(hubId, sc.name(), a)))
-                .filter(Objects::nonNull)
-                .forEach(req -> hubRouterClient.handleDeviceAction(req));
+        Map<String, SensorStateAvro> sensorsState = snapshot.getSensorsState();
+
+        for (ScenarioRuntime sc : scenarios) {
+            if (!conditionsOk(sc.conditions(), sensorsState)) continue;
+            for (ScenarioRuntime.ActionCmd action : sc.actions()) {
+                DeviceActionRequest req = toRequest(hubId, sc.name(), action);
+                if (req != null) {
+                    hubRouterClient.handleDeviceAction(req);
+                }
+            }
+        }
     }
 
-    private boolean predicatesOk(ScenarioRuntime scenario, Map<String, Integer> sensorValues) {
-        return scenario.conditions().stream()
-                .allMatch(c -> checkCondition(c, sensorValues));
+    private boolean conditionsOk(List<ScenarioRuntime.ConditionCheck> conditions,
+                                 Map<String, SensorStateAvro> sensorsState) {
+        for (ScenarioRuntime.ConditionCheck c : conditions) {
+            Integer actual = readValue(sensorsState, c.sensorId(), c.type());
+            if (actual == null) return false;
+            if (!compare(actual, c.operation(), c.value())) return false;
+        }
+        return true;
     }
 
-    private boolean checkCondition(ScenarioConditionRuntime c, Map<String, Integer> sensorValues) {
-        Integer v = sensorValues.get(c.sensorId());
-        if (v == null) return false;
-
-        String op = c.operation();
-        int target = c.value();
-
-        return switch (op) {
-            case "EQUALS" -> v == target;
-            case "GREATER_THAN" -> v > target;
-            case "LOWER_THAN" -> v < target;
+    private boolean compare(int actual, String operation, int target) {
+        if (operation == null) return false;
+        return switch (operation) {
+            case "LOWER_THAN" -> actual < target;
+            case "GREATER_THAN" -> actual > target;
+            case "EQUALS" -> actual == target;
             default -> false;
         };
     }
 
-    private HubEventMessagesProto.DeviceActionRequest toRequest(String hubId, String scenarioName, ScenarioActionRuntime a) {
-        HubEventMessagesProto.ActionTypeProto type;
+    private Integer readValue(Map<String, SensorStateAvro> sensorsState,
+                              String sensorId,
+                              String conditionType) {
+        if (sensorsState == null || sensorId == null || conditionType == null) return null;
+        SensorStateAvro state = sensorsState.get(sensorId);
+        if (state == null) return null;
+
+        Object data = state.getData();
+
+        return switch (conditionType) {
+            case "TEMPERATURE" -> readTemperature(data);
+            case "HUMIDITY" -> readHumidity(data);
+            case "LIGHT" -> readLight(data);
+            case "MOTION" -> readMotion(data);
+            case "SWITCH" -> readSwitch(data);
+            default -> null;
+        };
+    }
+
+    private Integer readTemperature(Object data) {
+        if (data instanceof ClimateSensorAvro c) return c.getTemperatureC();
+        if (data instanceof TemperatureSensorAvro t) return t.getTemperatureC();
+        return null;
+    }
+
+    private Integer readHumidity(Object data) {
+        if (data instanceof ClimateSensorAvro c) return c.getHumidity();
+        return null;
+    }
+
+    private Integer readLight(Object data) {
+        if (data instanceof LightSensorAvro l) return l.getLuminosity();
+        return null;
+    }
+
+    private Integer readMotion(Object data) {
+        if (data instanceof MotionSensorAvro m) return m.getMotion() ? 1 : 0;
+        return null;
+    }
+
+    private Integer readSwitch(Object data) {
+        if (data instanceof SwitchSensorAvro s) return s.getState() ? 1 : 0;
+        return null;
+    }
+
+    private DeviceActionRequest toRequest(String hubId, String scenarioName, ScenarioRuntime.ActionCmd a) {
+        if (hubId == null || scenarioName == null || a == null) return null;
+
+        ActionTypeProto type;
         try {
-            type = HubEventMessagesProto.ActionTypeProto.valueOf(a.type());
+            type = ActionTypeProto.valueOf(a.type());
         } catch (Exception e) {
-            type = HubEventMessagesProto.ActionTypeProto.ACTION_TYPE_UNSPECIFIED;
+            type = ActionTypeProto.ACTIVATE;
         }
 
-        HubEventMessagesProto.DeviceActionProto action = HubEventMessagesProto.DeviceActionProto.newBuilder()
+        DeviceActionProto action = DeviceActionProto.newBuilder()
                 .setType(type)
                 .setValue(a.value())
                 .build();
@@ -80,73 +137,11 @@ public class ScenarioEngine {
                 .setNanos(now.getNano())
                 .build();
 
-        return HubEventMessagesProto.DeviceActionRequest.newBuilder()
+        return DeviceActionRequest.newBuilder()
                 .setHubId(hubId)
                 .setScenarioName(scenarioName)
                 .setAction(action)
                 .setTimestamp(ts)
                 .build();
-    }
-
-    public record SnapshotView(String hubId, Map<String, Integer> sensorValues) {
-        public static SnapshotView from(Object snapshotAvro) {
-            String hubId = ReflectionSnapshotReader.readHubId(snapshotAvro);
-            Map<String, Integer> values = ReflectionSnapshotReader.readSensorValues(snapshotAvro);
-            return new SnapshotView(hubId, values);
-        }
-    }
-
-    static final class ReflectionSnapshotReader {
-        private ReflectionSnapshotReader() {}
-
-        public static String readHubId(Object snapshotAvro) {
-            try {
-                Object hubId = snapshotAvro.getClass().getMethod("getHubId").invoke(snapshotAvro);
-                return hubId == null ? null : hubId.toString();
-            } catch (Exception e) {
-                throw new IllegalStateException("Cannot read hubId from snapshot avro", e);
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        public static Map<String, Integer> readSensorValues(Object snapshotAvro) {
-            try {
-                Object states = snapshotAvro.getClass().getMethod("getStates").invoke(snapshotAvro);
-                if (states == null) return Map.of();
-
-                List<Object> list = (List<Object>) states;
-                return list.stream()
-                        .map(ReflectionSnapshotReader::stateToPair)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(
-                                p -> p.sensorId,
-                                p -> p.value,
-                                (a, b) -> b
-                        ));
-            } catch (Exception e) {
-                throw new IllegalStateException("Cannot read states from snapshot avro", e);
-            }
-        }
-
-        private static Pair stateToPair(Object state) {
-            try {
-                Object sensorId = state.getClass().getMethod("getSensorId").invoke(state);
-                Object value = state.getClass().getMethod("getValue").invoke(state);
-                if (sensorId == null || value == null) return null;
-                return new Pair(sensorId.toString(), ((Number) value).intValue());
-            } catch (Exception e) {
-                return null;
-            }
-        }
-
-        private static final class Pair {
-            final String sensorId;
-            final int value;
-
-            Pair(String sensorId, int value) {
-                this.sensorId = sensorId;
-                this.value = value;
-            }
-        }
     }
 }

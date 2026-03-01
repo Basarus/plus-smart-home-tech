@@ -10,11 +10,8 @@ import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.telemetry.collector.api.dto.*;
 import ru.yandex.practicum.telemetry.collector.kafka.TelemetryProducer;
 import ru.yandex.practicum.telemetry.collector.mapper.AvroEventMapper;
-
-import java.time.Instant;
 
 @GrpcService
 @RequiredArgsConstructor
@@ -26,8 +23,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
     @Override
     public void collectSensorEvent(SensorEventProto request, StreamObserver<Empty> responseObserver) {
         try {
-            SensorEventDto dto = toSensorDto(request);
-            SensorEventAvro avro = mapper.toAvro(dto);
+            SensorEventAvro avro = mapper.toAvro(request);
             producer.sendSensorEvent(avro);
 
             responseObserver.onNext(Empty.getDefaultInstance());
@@ -58,70 +54,5 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                             .asRuntimeException()
             );
         }
-    }
-
-    private SensorEventDto toSensorDto(SensorEventProto event) {
-        Instant ts = toInstant(event.getTimestamp());
-        String id = event.getId();
-        String hubId = event.getHubId();
-
-        return switch (event.getPayloadCase()) {
-            case MOTION_SENSOR -> {
-                var p = event.getMotionSensor();
-                yield new MotionSensorEventDto(
-                        id,
-                        hubId,
-                        ts,
-                        p.getLinkQuality(),
-                        p.getMotion(),
-                        p.getVoltage()
-                );
-            }
-            case TEMPERATURE_SENSOR -> {
-                var p = event.getTemperatureSensor();
-                yield new TemperatureSensorEventDto(
-                        id,
-                        hubId,
-                        ts,
-                        p.getTemperatureC(),
-                        p.getTemperatureF()
-                );
-            }
-            case LIGHT_SENSOR -> {
-                var p = event.getLightSensor();
-                yield new LightSensorEventDto(
-                        id,
-                        hubId,
-                        ts,
-                        p.getLinkQuality(),
-                        p.getLuminosity()
-                );
-            }
-            case CLIMATE_SENSOR -> {
-                var p = event.getClimateSensor();
-                yield new ClimateSensorEventDto(
-                        id,
-                        hubId,
-                        ts,
-                        p.getTemperatureC(),
-                        p.getHumidity(),
-                        p.getCo2Level()
-                );
-            }
-            case SWITCH_SENSOR -> {
-                var p = event.getSwitchSensor();
-                yield new SwitchSensorEventDto(
-                        id,
-                        hubId,
-                        ts,
-                        p.getState()
-                );
-            }
-            case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
-        };
-    }
-
-    private Instant toInstant(com.google.protobuf.Timestamp ts) {
-        return Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos());
     }
 }

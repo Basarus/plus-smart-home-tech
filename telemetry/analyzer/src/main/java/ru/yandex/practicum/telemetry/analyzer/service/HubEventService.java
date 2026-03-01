@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.analyzer.model.*;
 import ru.yandex.practicum.telemetry.analyzer.repo.*;
+import ru.yandex.practicum.telemetry.analyzer.serialization.SpecificAvroDeserializer;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,37 +18,41 @@ public class HubEventService {
     private final ActionRepository actionRepository;
     private final ScenarioConditionRepository scenarioConditionRepository;
     private final ScenarioActionRepository scenarioActionRepository;
+    private final SpecificAvroDeserializer avroDeserializer;
 
     public HubEventService(ScenarioRepository scenarioRepository,
                            SensorRepository sensorRepository,
                            ConditionRepository conditionRepository,
                            ActionRepository actionRepository,
                            ScenarioConditionRepository scenarioConditionRepository,
-                           ScenarioActionRepository scenarioActionRepository) {
+                           ScenarioActionRepository scenarioActionRepository,
+                           SpecificAvroDeserializer avroDeserializer) {
         this.scenarioRepository = scenarioRepository;
         this.sensorRepository = sensorRepository;
         this.conditionRepository = conditionRepository;
         this.actionRepository = actionRepository;
         this.scenarioConditionRepository = scenarioConditionRepository;
         this.scenarioActionRepository = scenarioActionRepository;
+        this.avroDeserializer = avroDeserializer;
     }
 
     @Transactional
-    public void handle(HubEventAvro event) {
-        Object payload = event.getPayload();
-        if (payload instanceof DeviceAddedEventAvro p) {
+    public void handle(byte[] payload) {
+        HubEventAvro event = avroDeserializer.deserialize(payload, HubEventAvro.class);
+        Object eventPayload = event.getPayload();
+        if (eventPayload instanceof DeviceAddedEventAvro p) {
             handleDeviceAdded(event.getHubId().toString(), p);
             return;
         }
-        if (payload instanceof DeviceRemovedEventAvro p) {
+        if (eventPayload instanceof DeviceRemovedEventAvro p) {
             handleDeviceRemoved(event.getHubId().toString(), p);
             return;
         }
-        if (payload instanceof ScenarioAddedEventAvro p) {
+        if (eventPayload instanceof ScenarioAddedEventAvro p) {
             handleScenarioAdded(event.getHubId().toString(), p);
             return;
         }
-        if (payload instanceof ScenarioRemovedEventAvro p) {
+        if (eventPayload instanceof ScenarioRemovedEventAvro p) {
             handleScenarioRemoved(event.getHubId().toString(), p);
         }
     }
@@ -104,8 +109,7 @@ public class HubEventService {
                 Sensor sensor = sensorRepository.findByIdAndHubId(sensorId, hubId)
                         .orElseGet(() -> sensorRepository.save(new Sensor(sensorId, hubId)));
 
-                Integer value = a.getValue() == null ? null : (Integer) a.getValue();
-                Action act = actionRepository.save(new Action(String.valueOf(a.getType()), value));
+                Action act = actionRepository.save(new Action(String.valueOf(a.getType()), a.getValue()));
                 scenarioActionRepository.save(new ScenarioAction(scenario, sensor, act));
             }
         }
