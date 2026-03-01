@@ -29,8 +29,7 @@ public class AvroEventMapper {
         SensorEventAvro avro = new SensorEventAvro();
         avro.setId(request.getId());
         avro.setHubId(request.getHubId());
-        avro.setTimestamp(toEpochMillis(request.getTimestamp()));
-        ;
+        avro.setTimestamp(toInstant(request.getTimestamp()));
 
         Object payload;
         switch (request.getPayloadCase()) {
@@ -50,8 +49,7 @@ public class AvroEventMapper {
     public HubEventAvro toHubEventAvro(HubEventProto request) {
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(request.getHubId());
-        avro.setTimestamp(toEpochMillis(request.getTimestamp()));
-        ;
+        avro.setTimestamp(toInstant(request.getTimestamp()));
 
         Object payload;
         switch (request.getPayloadCase()) {
@@ -166,29 +164,22 @@ public class AvroEventMapper {
         };
     }
 
-    private List<ScenarioActionAvro> mapActions(List<ScenarioActionProto> items) {
-        List<ScenarioActionAvro> out = new ArrayList<>();
-
+    private List<DeviceActionAvro> mapActions(List<ScenarioActionProto> items) {
+        List<DeviceActionAvro> out = new ArrayList<>();
         for (ScenarioActionProto proto : items) {
-            ScenarioActionAvro a = new ScenarioActionAvro();
+            DeviceActionAvro a = new DeviceActionAvro();
 
-            String sensorId = safeInvoke(proto, String.class, "getSensorId", "getId", "getDeviceId");
-            if (sensorId != null) a.setSensorId(sensorId);
+            a.setSensorId(proto.getSensorId());
+            a.setType(mapActionType(proto.getType()));
 
-            ActionTypeProto typeProto = safeInvoke(proto, ActionTypeProto.class, "getType", "getActionType");
-            ActionTypeAvro avroType = mapActionType(typeProto);
-            if (avroType != null) a.setType(avroType);
-
-            Integer value = safeInvoke(proto, Integer.class, "getValue", "getIntValue", "getSetValue");
-            if (value != null) {
-                a.setValue(value);
+            if (proto.getType() == ActionTypeProto.SET_VALUE) {
+                a.setValue(proto.getValue());
             } else {
                 a.setValue(0);
             }
 
             out.add(a);
         }
-
         return out;
     }
 
