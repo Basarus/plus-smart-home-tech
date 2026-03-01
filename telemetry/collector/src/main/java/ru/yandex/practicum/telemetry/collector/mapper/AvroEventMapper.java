@@ -127,7 +127,7 @@ public class AvroEventMapper {
                 ScenarioAddedEventAvro payload = new ScenarioAddedEventAvro();
                 payload.setName(p.getName());
                 payload.setConditions(mapConditions(p.getConditionsList()));
-                payload.setActions(mapScenarioActionsFromProto(p.getActionsList()));
+                payload.setActions(mapDeviceActionsFromProto(p.getActionsList()));
                 avro.setPayload(payload);
             }
             case SCENARIO_REMOVED -> {
@@ -178,9 +178,9 @@ public class AvroEventMapper {
             }
             payload.setConditions(conditions);
 
-            List<ScenarioActionAvro> actions = new ArrayList<>();
+            List<DeviceActionAvro> actions = new ArrayList<>();
             for (DeviceActionDto a : e.getActions()) {
-                ScenarioActionAvro action = new ScenarioActionAvro();
+                DeviceActionAvro action = new DeviceActionAvro();
                 action.setSensorId(a.sensorId());
                 action.setType(mapActionType(a.type()));
                 action.setValue(a.value() != null ? a.value() : 0);
@@ -210,16 +210,16 @@ public class AvroEventMapper {
             ConditionProto cond = c.getCondition();
             a.setType(mapConditionType(cond.getType()));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            a.setValue(c.getCondition().getIntValue());
+            a.setValue(cond.getIntValue());
             out.add(a);
         }
         return out;
     }
 
-    private List<ScenarioActionAvro> mapScenarioActionsFromProto(List<ScenarioActionProto> actions) {
-        List<ScenarioActionAvro> out = new ArrayList<>();
+    private List<DeviceActionAvro> mapDeviceActionsFromProto(List<ScenarioActionProto> actions) {
+        List<DeviceActionAvro> out = new ArrayList<>();
         for (ScenarioActionProto act : actions) {
-            ScenarioActionAvro a = new ScenarioActionAvro();
+            DeviceActionAvro a = new DeviceActionAvro();
             a.setSensorId(act.getSensorId());
             DeviceActionProto proto = act.getAction();
             a.setType(mapActionType(proto.getType()));
