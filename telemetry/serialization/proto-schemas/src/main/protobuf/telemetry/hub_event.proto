@@ -81,7 +81,7 @@ enum DeviceTypeProto {
 
 enum ConditionTypeProto {
   MOTION = 0;
-  LUMINOSITY = 1;
+  ILLUMINATION = 1;
   SWITCH = 2;
   TEMPERATURE = 3;
   CO2LEVEL = 4;
