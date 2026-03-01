@@ -1,3 +1,9 @@
+spring:
+  application:
+    name: collector
+  main:
+    web-application-type: none
+
 grpc:
   server:
     port: 59091
@@ -9,3 +15,7 @@ collector:
     topics:
       sensors: ${KAFKA_TOPIC_SENSORS:telemetry.sensors.v1}
       hubs: ${KAFKA_TOPIC_HUBS:telemetry.hubs.v1}
+
+logging:
+  level:
+    root: INFO
