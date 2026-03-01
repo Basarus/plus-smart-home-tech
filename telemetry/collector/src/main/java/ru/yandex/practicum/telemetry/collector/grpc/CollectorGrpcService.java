@@ -10,12 +10,7 @@ import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.grpc.telemetry.message.event.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.telemetry.collector.api.dto.ClimateSensorEventDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.LightSensorEventDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.MotionSensorEventDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.SensorEventDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.SwitchSensorEventDto;
-import ru.yandex.practicum.telemetry.collector.api.dto.TemperatureSensorEventDto;
+import ru.yandex.practicum.telemetry.collector.api.dto.*;
 import ru.yandex.practicum.telemetry.collector.kafka.TelemetryProducer;
 import ru.yandex.practicum.telemetry.collector.mapper.AvroEventMapper;
 
@@ -34,6 +29,7 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
             SensorEventDto dto = toSensorDto(request);
             SensorEventAvro avro = mapper.toAvro(dto);
             producer.sendSensorEvent(avro);
+
             responseObserver.onNext(Empty.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (Exception e) {
@@ -41,19 +37,15 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                     Status.INVALID_ARGUMENT
                             .withDescription("Failed to handle sensor event: " + e.getMessage())
                             .withCause(e)
-                            .asRuntimeException());
+                            .asRuntimeException()
+            );
         }
     }
 
     @Override
     public void collectHubEvent(HubEventProto request, StreamObserver<Empty> responseObserver) {
         try {
-            String hubId = request.getHubId();
-            Instant ts = toInstant(request.getTimestamp());
-            byte[] payload = request.toByteArray();
-
-            HubEventAvro avro = mapper.toHubEventAvro(request.getHubId(), ts, payload);;
-
+            HubEventAvro avro = mapper.toHubEventAvro(request);
             producer.sendHubEvent(avro);
 
             responseObserver.onNext(Empty.getDefaultInstance());
@@ -63,7 +55,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                     Status.INVALID_ARGUMENT
                             .withDescription("Failed to handle hub event: " + e.getMessage())
                             .withCause(e)
-                            .asRuntimeException());
+                            .asRuntimeException()
+            );
         }
     }
 
@@ -81,7 +74,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         ts,
                         p.getLinkQuality(),
                         p.getMotion(),
-                        p.getVoltage());
+                        p.getVoltage()
+                );
             }
             case TEMPERATURE_SENSOR -> {
                 var p = event.getTemperatureSensor();
@@ -90,7 +84,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         hubId,
                         ts,
                         p.getTemperatureC(),
-                        p.getTemperatureF());
+                        p.getTemperatureF()
+                );
             }
             case LIGHT_SENSOR -> {
                 var p = event.getLightSensor();
@@ -99,7 +94,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         hubId,
                         ts,
                         p.getLinkQuality(),
-                        p.getLuminosity());
+                        p.getLuminosity()
+                );
             }
             case CLIMATE_SENSOR -> {
                 var p = event.getClimateSensor();
@@ -109,7 +105,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         ts,
                         p.getTemperatureC(),
                         p.getHumidity(),
-                        p.getCo2Level());
+                        p.getCo2Level()
+                );
             }
             case SWITCH_SENSOR -> {
                 var p = event.getSwitchSensor();
@@ -117,7 +114,8 @@ public class CollectorGrpcService extends CollectorControllerGrpc.CollectorContr
                         id,
                         hubId,
                         ts,
-                        p.getState());
+                        p.getState()
+                );
             }
             case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
         };

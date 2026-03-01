@@ -7,12 +7,11 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "collector.kafka")
 public record KafkaProps(
-                @NotBlank String bootstrapServers,
-                @NotBlank String clientId) {
+        @NotBlank String bootstrapServers,
+        @NotBlank String clientId
+) {
         public KafkaProps {
-                if (bootstrapServers == null || bootstrapServers.isBlank())
-                        bootstrapServers = "localhost:9092";
-                if (clientId == null || clientId.isBlank())
-                        clientId = "collector";
+                if (bootstrapServers == null || bootstrapServers.isBlank()) bootstrapServers = "localhost:9092";
+                if (clientId == null || clientId.isBlank()) clientId = "collector";
         }
 }

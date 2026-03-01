@@ -1,11 +1,10 @@
 package ru.yandex.practicum.telemetry.collector.mapper;
 
-import java.time.Instant;
-
 import org.springframework.stereotype.Component;
-
 import ru.yandex.practicum.grpc.telemetry.message.event.*;
 import ru.yandex.practicum.telemetry.collector.api.dto.*;
+
+import java.time.Instant;
 
 @Component
 public class HubEventProtoMapper {
