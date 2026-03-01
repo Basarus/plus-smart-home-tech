@@ -16,17 +16,9 @@ protocol HubEventProtocol {
     HUMIDITY
   }
 
-  enum ConditionOperationAvro {
-    EQUALS,
-    GREATER_THAN,
-    LOWER_THAN
-  }
+ConditionOperationAvro { LOWER_THAN, GREATER_THAN, EQUALS }
 
-  enum ActionTypeAvro {
-    TURN_ON,
-    TURN_OFF,
-    SET_VALUE
-  }
+ActionTypeAvro { ACTIVATE, DEACTIVATE, INVERSE }
 
   record DeviceAddedEventAvro {
     string id;

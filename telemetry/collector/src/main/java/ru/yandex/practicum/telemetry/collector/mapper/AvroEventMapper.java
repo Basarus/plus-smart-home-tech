@@ -1,5 +1,6 @@
 package ru.yandex.practicum.telemetry.collector.mapper;
 
+import com.google.protobuf.Timestamp;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.message.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
@@ -36,34 +37,12 @@ public class AvroEventMapper {
         avro.setTimestamp(toInstant(request.getTimestamp()));
 
         switch (request.getPayloadCase()) {
-            case DEVICE_ADDED -> {
-                var p = request.getDeviceAdded();
-                DeviceAddedEventAvro payload = new DeviceAddedEventAvro();
-                payload.setId(p.getId());
-                payload.setType(mapDeviceType(p.getType()));
-                avro.setPayload(payload);
-            }
-            case DEVICE_REMOVED -> {
-                var p = request.getDeviceRemoved();
-                DeviceRemovedEventAvro payload = new DeviceRemovedEventAvro();
-                payload.setId(p.getId());
-                avro.setPayload(payload);
-            }
-            case SCENARIO_ADDED -> {
-                var p = request.getScenarioAdded();
-                ScenarioAddedEventAvro payload = new ScenarioAddedEventAvro();
-                payload.setName(p.getName());
-                payload.setConditions(mapConditions(p.getConditionsList()));
-                payload.setActions(mapActions(p.getActionsList()));
-                avro.setPayload(payload);
-            }
-            case SCENARIO_REMOVED -> {
-                var p = request.getScenarioRemoved();
-                ScenarioRemovedEventAvro payload = new ScenarioRemovedEventAvro();
-                payload.setName(p.getName());
-                avro.setPayload(payload);
-            }
-            case DEVICE_ACTION_REQUEST, PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Unsupported hub payload: " + request.getPayloadCase());
+            case DEVICE_ADDED -> avro.setPayload(mapDeviceAdded(request.getDeviceAdded()));
+            case DEVICE_REMOVED -> avro.setPayload(mapDeviceRemoved(request.getDeviceRemoved()));
+            case SCENARIO_ADDED -> avro.setPayload(mapScenarioAdded(request.getScenarioAdded()));
+            case SCENARIO_REMOVED -> avro.setPayload(mapScenarioRemoved(request.getScenarioRemoved()));
+            case DEVICE_ACTION_REQUEST, PAYLOAD_NOT_SET ->
+                    throw new IllegalArgumentException("Unsupported hub payload: " + request.getPayloadCase());
         }
 
         return avro;
@@ -108,11 +87,35 @@ public class AvroEventMapper {
         throw new IllegalArgumentException("Unsupported hub event: " + dto.getClass().getName());
     }
 
-    private long toEpochMilli(Instant ts) {
-        return ts == null ? 0L : ts.toEpochMilli();
+    private DeviceAddedEventAvro mapDeviceAdded(DeviceAddedEventProto p) {
+        DeviceAddedEventAvro payload = new DeviceAddedEventAvro();
+        payload.setId(p.getId());
+        payload.setType(mapDeviceType(p.getType()));
+        return payload;
     }
 
-    private Instant toInstant(com.google.protobuf.Timestamp ts) {
+    private DeviceRemovedEventAvro mapDeviceRemoved(DeviceRemovedEventProto p) {
+        DeviceRemovedEventAvro payload = new DeviceRemovedEventAvro();
+        payload.setId(p.getId());
+        return payload;
+    }
+
+    private ScenarioAddedEventAvro mapScenarioAdded(ScenarioAddedEventProto p) {
+        ScenarioAddedEventAvro payload = new ScenarioAddedEventAvro();
+        payload.setName(p.getName());
+        payload.setConditions(mapConditions(p.getConditionsList()));
+        payload.setActions(mapActions(p.getActionsList()));
+        return payload;
+    }
+
+    private ScenarioRemovedEventAvro mapScenarioRemoved(ScenarioRemovedEventProto p) {
+        ScenarioRemovedEventAvro payload = new ScenarioRemovedEventAvro();
+        payload.setName(p.getName());
+        return payload;
+    }
+
+    private Instant toInstant(Timestamp ts) {
+        if (ts == null) return Instant.EPOCH;
         return Instant.ofEpochSecond(ts.getSeconds(), ts.getNanos());
     }
 
@@ -123,7 +126,8 @@ public class AvroEventMapper {
             case LIGHT_SENSOR -> DeviceTypeAvro.LIGHT_SENSOR;
             case HUMIDITY_SENSOR -> DeviceTypeAvro.HUMIDITY_SENSOR;
             case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
-            default -> DeviceTypeAvro.MOTION_SENSOR;
+            case UNRECOGNIZED -> throw new IllegalArgumentException("Unknown deviceType: " + t);
+            default -> throw new IllegalArgumentException("Unsupported deviceType for avro: " + t);
         };
     }
 
@@ -131,11 +135,11 @@ public class AvroEventMapper {
         if (s == null) throw new IllegalArgumentException("deviceType is null");
 
         return switch (s) {
-            case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
             case "MOTION_SENSOR" -> DeviceTypeAvro.MOTION_SENSOR;
             case "TEMPERATURE_SENSOR" -> DeviceTypeAvro.TEMPERATURE_SENSOR;
             case "LIGHT_SENSOR" -> DeviceTypeAvro.LIGHT_SENSOR;
             case "HUMIDITY_SENSOR" -> DeviceTypeAvro.HUMIDITY_SENSOR;
+            case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
             default -> throw new IllegalArgumentException("Unknown deviceType: " + s);
         };
     }
@@ -149,7 +153,7 @@ public class AvroEventMapper {
             ConditionProto cond = c.getCondition();
             a.setType(mapConditionType(cond.getType()));
             a.setOperation(mapConditionOperation(cond.getOperation()));
-            a.setValue(mapConditionValue(cond.getType(), cond.getValue()));
+            a.setValue(cond.getValue());
 
             out.add(a);
         }
@@ -183,25 +187,18 @@ public class AvroEventMapper {
             case TEMPERATURE -> ConditionTypeAvro.TEMPERATURE;
             case HUMIDITY -> ConditionTypeAvro.HUMIDITY;
             case ILLUMINATION -> ConditionTypeAvro.LIGHT;
-            case SWITCH -> ConditionTypeAvro.MOTION;
-            case CO2 -> ConditionTypeAvro.TEMPERATURE;
-            default -> ConditionTypeAvro.MOTION;
+            case CONDITION_TYPE_UNSPECIFIED, SWITCH, CO2, UNRECOGNIZED ->
+                    throw new IllegalArgumentException("Unsupported conditionType for avro: " + t);
         };
     }
 
     private ConditionOperationAvro mapConditionOperation(ConditionOperationProto op) {
         return switch (op) {
-            case EQUALS -> ConditionOperationAvro.EQUALS;
-            case GREATER_THAN -> ConditionOperationAvro.GREATER_THAN;
             case LOWER_THAN -> ConditionOperationAvro.LOWER_THAN;
-            default -> ConditionOperationAvro.EQUALS;
-        };
-    }
-
-    private Object mapConditionValue(ConditionTypeProto type, int value) {
-        return switch (type) {
-            case MOTION, SWITCH -> value != 0 ? 1 : 0;
-            default -> value;
+            case GREATER_THAN -> ConditionOperationAvro.GREATER_THAN;
+            case EQUALS -> ConditionOperationAvro.EQUALS;
+            case OPERATION_UNSPECIFIED, UNRECOGNIZED ->
+                    throw new IllegalArgumentException("Unknown conditionOperation: " + op);
         };
     }
 
@@ -210,7 +207,8 @@ public class AvroEventMapper {
             case ACTIVATE_TURN_ON -> ActionTypeAvro.TURN_ON;
             case ACTIVATE_TURN_OFF -> ActionTypeAvro.TURN_OFF;
             case SET_TEMPERATURE, SET_BRIGHTNESS, SET_HUMIDITY -> ActionTypeAvro.SET_VALUE;
-            default -> ActionTypeAvro.SET_VALUE;
+            case ACTION_TYPE_UNSPECIFIED, UNRECOGNIZED ->
+                    throw new IllegalArgumentException("Unknown actionType: " + t);
         };
     }
 

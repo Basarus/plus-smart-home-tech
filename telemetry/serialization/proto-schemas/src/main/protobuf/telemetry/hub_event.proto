@@ -53,7 +53,11 @@ message ScenarioActionProto {
 message ConditionProto {
   ConditionTypeProto type = 1;
   ConditionOperationProto operation = 2;
-  int32 value = 3;
+
+  oneof value {
+    int32 int_value = 3;
+    bool bool_value = 4;
+  }
 }
 
 message DeviceActionProto {
@@ -69,43 +73,29 @@ message DeviceActionRequest {
 }
 
 enum DeviceTypeProto {
-  DEVICE_TYPE_UNSPECIFIED = 0;
+  TEMPERATURE_SENSOR = 0;
   MOTION_SENSOR = 1;
-  TEMPERATURE_SENSOR = 2;
-  LIGHT_SENSOR = 3;
-  HUMIDITY_SENSOR = 4;
-  SWITCH_SENSOR = 5;
-  CO2_SENSOR = 6;
-  SMART_PLUG = 7;
-  LAMP = 8;
-  AIR_CONDITIONER = 9;
-  HEATER = 10;
-  HUMIDIFIER = 11;
-  VENTILATION = 12;
+  LIGHT_SENSOR = 2;
+  HUMIDITY_SENSOR = 3;
+  SWITCH_SENSOR = 4;
 }
 
 enum ConditionTypeProto {
-  CONDITION_TYPE_UNSPECIFIED = 0;
-  TEMPERATURE = 1;
-  HUMIDITY = 2;
-  ILLUMINATION = 3;
-  MOTION = 4;
-  SWITCH = 5;
-  CO2 = 6;
+  TEMPERATURE = 0;
+  HUMIDITY = 1;
+  ILLUMINATION = 2;
+  MOTION = 3;
+  SWITCH = 4;
 }
 
 enum ConditionOperationProto {
-  OPERATION_UNSPECIFIED = 0;
-  EQUALS = 1;
-  GREATER_THAN = 2;
-  LOWER_THAN = 3;
+  LOWER_THAN = 0;
+  GREATER_THAN = 1;
+  EQUALS = 2;
 }
 
 enum ActionTypeProto {
-  ACTION_TYPE_UNSPECIFIED = 0;
-  ACTIVATE_TURN_ON = 1;
-  ACTIVATE_TURN_OFF = 2;
-  SET_TEMPERATURE = 3;
-  SET_BRIGHTNESS = 4;
-  SET_HUMIDITY = 5;
+  ACTIVATE = 0;
+  DEACTIVATE = 1;
+  INVERSE = 2;
 }
