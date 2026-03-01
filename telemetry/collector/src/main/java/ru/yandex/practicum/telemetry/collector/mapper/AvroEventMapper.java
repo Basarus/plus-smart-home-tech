@@ -11,8 +11,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ru.yandex.practicum.kafka.telemetry.event.ActionTypeAvro.SET_VALUE;
-
 @Component
 @Slf4j
 public class AvroEventMapper {
@@ -238,7 +236,7 @@ public class AvroEventMapper {
             case ILLUMINATION -> ConditionTypeAvro.LUMINOSITY;
             case HUMIDITY -> ConditionTypeAvro.HUMIDITY;
             case SWITCH -> ConditionTypeAvro.SWITCH;
-            default -> throw new IllegalArgumentException("Unsupported condition type: " + t);
+            case UNRECOGNIZED -> null;
         };
     }
 
@@ -247,7 +245,7 @@ public class AvroEventMapper {
             case EQUALS -> ConditionOperationAvro.EQUALS;
             case GREATER_THAN -> ConditionOperationAvro.GREATER_THAN;
             case LOWER_THAN -> ConditionOperationAvro.LOWER_THAN;
-            default -> throw new IllegalArgumentException("Unsupported condition operation: " + op);
+            case UNRECOGNIZED -> null;
         };
     }
 
@@ -268,8 +266,7 @@ public class AvroEventMapper {
             case ACTIVATE -> ActionTypeAvro.ACTIVATE;
             case DEACTIVATE -> ActionTypeAvro.DEACTIVATE;
             case INVERSE -> ActionTypeAvro.INVERSE;
-            case SET_VALUE -> SET_VALUE;
-            default -> throw new IllegalArgumentException("Unsupported action type: " + t);
+            case UNRECOGNIZED -> null;
         };
     }
 

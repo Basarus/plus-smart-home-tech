@@ -98,4 +98,5 @@ enum ActionTypeProto {
   ACTIVATE = 0;
   DEACTIVATE = 1;
   INVERSE = 2;
+  SET_VALUE = 3;
 }
