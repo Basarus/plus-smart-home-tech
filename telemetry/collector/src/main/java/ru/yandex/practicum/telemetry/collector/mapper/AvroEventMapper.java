@@ -25,7 +25,7 @@ public class AvroEventMapper {
         SensorEventAvro avro = new SensorEventAvro();
         avro.setId(dto.getId());
         avro.setHubId(dto.getHubId());
-        avro.setTimestamp(toEpochMilli(dto.getTimestamp()));
+        avro.setTimestamp(dto.getTimestamp());
         avro.setPayload(payload);
         return avro;
     }
@@ -33,7 +33,7 @@ public class AvroEventMapper {
     public HubEventAvro toHubEventAvro(HubEventProto request) {
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(request.getHubId());
-        avro.setTimestamp(toEpochMilli(toInstant(request.getTimestamp())));
+        avro.setTimestamp(toInstant(request.getTimestamp()));
 
         switch (request.getPayloadCase()) {
             case DEVICE_ADDED -> {
@@ -72,7 +72,7 @@ public class AvroEventMapper {
     public HubEventAvro toHubEventAvro(HubEventDto dto) {
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(dto.getHubId());
-        avro.setTimestamp(toEpochMilli(dto.getTimestamp()));
+        avro.setTimestamp(dto.getTimestamp());
 
         if (dto instanceof DeviceAddedEventDto e) {
             DeviceAddedEventAvro payload = new DeviceAddedEventAvro();
@@ -170,11 +170,9 @@ public class AvroEventMapper {
     private ConditionTypeAvro mapConditionType(ConditionTypeProto t) {
         return switch (t) {
             case MOTION -> ConditionTypeAvro.MOTION;
-            case SWITCH -> ConditionTypeAvro.SWITCH;
             case TEMPERATURE -> ConditionTypeAvro.TEMPERATURE;
             case HUMIDITY -> ConditionTypeAvro.HUMIDITY;
-            case CO2 -> ConditionTypeAvro.CO2LEVEL;
-            case ILLUMINATION -> ConditionTypeAvro.LUMINOSITY;
+            case ILLUMINATION -> ConditionTypeAvro.LIGHT;
             default -> ConditionTypeAvro.MOTION;
         };
     }
@@ -198,8 +196,8 @@ public class AvroEventMapper {
 
     private ActionTypeAvro mapActionType(ActionTypeProto t) {
         return switch (t) {
-            case ACTIVATE_TURN_ON -> ActionTypeAvro.ACTIVATE;
-            case ACTIVATE_TURN_OFF -> ActionTypeAvro.DEACTIVATE;
+            case ACTIVATE_TURN_ON -> ActionTypeAvro.TURN_ON;
+            case ACTIVATE_TURN_OFF -> ActionTypeAvro.TURN_OFF;
             case SET_TEMPERATURE, SET_BRIGHTNESS, SET_HUMIDITY -> ActionTypeAvro.SET_VALUE;
             default -> ActionTypeAvro.SET_VALUE;
         };
