@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.message.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.collector.api.dto.*;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -175,6 +176,56 @@ public class AvroEventMapper {
         }
 
         return out;
+    }
+
+    public SensorEventAvro toAvro(SensorEventProto request) {
+        SensorEventAvro avro = new SensorEventAvro();
+        avro.setId(request.getId());
+        avro.setHubId(request.getHubId());
+        avro.setTimestamp(toInstant(request.getTimestamp()));
+
+        Object payload = switch (request.getPayloadCase()) {
+            case MOTION_SENSOR -> {
+                var p = request.getMotionSensor();
+                MotionSensorAvro a = new MotionSensorAvro();
+                a.setLinkQuality(p.getLinkQuality());
+                a.setMotion(p.getMotion());
+                a.setVoltage(p.getVoltage());
+                yield a;
+            }
+            case TEMPERATURE_SENSOR -> {
+                var p = request.getTemperatureSensor();
+                TemperatureSensorAvro a = new TemperatureSensorAvro();
+                a.setTemperatureC(p.getTemperatureC());
+                a.setTemperatureF(p.getTemperatureF());
+                yield a;
+            }
+            case LIGHT_SENSOR -> {
+                var p = request.getLightSensor();
+                LightSensorAvro a = new LightSensorAvro();
+                a.setLinkQuality(p.getLinkQuality());
+                a.setLuminosity(p.getLuminosity());
+                yield a;
+            }
+            case CLIMATE_SENSOR -> {
+                var p = request.getClimateSensor();
+                ClimateSensorAvro a = new ClimateSensorAvro();
+                a.setTemperatureC(p.getTemperatureC());
+                a.setHumidity(p.getHumidity());
+                a.setCo2Level(p.getCo2Level());
+                yield a;
+            }
+            case SWITCH_SENSOR -> {
+                var p = request.getSwitchSensor();
+                SwitchSensorAvro a = new SwitchSensorAvro();
+                a.setState(p.getState());
+                yield a;
+            }
+            case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("Sensor payload is not set");
+        };
+
+        avro.setPayload(payload);
+        return avro;
     }
 
     private ConditionTypeAvro mapConditionType(ConditionTypeProto t) {
