@@ -131,8 +131,8 @@ public class AvroEventMapper {
         if (s == null || s.isBlank()) throw new IllegalArgumentException("deviceType is null/blank");
 
         return switch (s) {
-            case "MOTION_SENSOR" -> DeviceTypeAvro.MOTION_SENSOR;
             case "TEMPERATURE_SENSOR" -> DeviceTypeAvro.TEMPERATURE_SENSOR;
+            case "MOTION_SENSOR" -> DeviceTypeAvro.MOTION_SENSOR;
             case "LIGHT_SENSOR" -> DeviceTypeAvro.LIGHT_SENSOR;
             case "SWITCH_SENSOR" -> DeviceTypeAvro.SWITCH_SENSOR;
             case "HUMIDITY_SENSOR", "CO2_SENSOR", "CLIMATE_SENSOR" -> DeviceTypeAvro.CLIMATE_SENSOR;
