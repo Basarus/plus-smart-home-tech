@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto;
-import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.message.event.HubEventMessagesProto.HubEvent;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 
 @Component
@@ -15,14 +15,14 @@ public class HubEventProtoMapper {
 
     public HubEventAvro toHubEventAvro(String hubId, Instant timestamp, byte[] protoPayload) {
         try {
-            HubEventProto proto = HubEventProto.parseFrom(protoPayload);
+            HubEvent proto = HubEvent.parseFrom(protoPayload);
             return toHubEventAvro(proto);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Cannot parse HubEventProto from bytes", e);
+            throw new IllegalArgumentException("Cannot parse HubEvent from bytes", e);
         }
     }
 
-    public HubEventAvro toHubEventAvro(HubEventProto proto) {
+    public HubEventAvro toHubEventAvro(HubEvent proto) {
         HubEventAvro avro = new HubEventAvro();
         avro.setHubId(proto.getHubId());
         avro.setTimestamp(Instant.ofEpochMilli(proto.getTimestamp()));
@@ -32,39 +32,39 @@ public class HubEventProtoMapper {
             case DEVICE_REMOVED -> mapDeviceRemoved(proto.getDeviceRemoved());
             case SCENARIO_ADDED -> mapScenarioAdded(proto.getScenarioAdded());
             case SCENARIO_REMOVED -> mapScenarioRemoved(proto.getScenarioRemoved());
-            case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("HubEventProto payload is not set");
+            case PAYLOAD_NOT_SET -> throw new IllegalArgumentException("HubEvent payload is not set");
         };
 
         avro.setPayload(payload);
         return avro;
     }
 
-    private DeviceAddedEventAvro mapDeviceAdded(HubEventMessagesProto.DeviceAddedEventProto p) {
+    private DeviceAddedEventAvro mapDeviceAdded(HubEventMessagesProto.DeviceAddedEvent p) {
         DeviceAddedEventAvro e = new DeviceAddedEventAvro();
         e.setId(p.getId());
         e.setType(mapDeviceType(p.getDeviceType()));
         return e;
     }
 
-    private DeviceRemovedEventAvro mapDeviceRemoved(HubEventProto.DeviceRemovedEventProto p) {
+    private DeviceRemovedEventAvro mapDeviceRemoved(HubEventMessagesProto.DeviceRemovedEvent p) {
         DeviceRemovedEventAvro e = new DeviceRemovedEventAvro();
         e.setId(p.getId());
         return e;
     }
 
-    private ScenarioAddedEventAvro mapScenarioAdded(HubEventProto.ScenarioAddedEventProto p) {
+    private ScenarioAddedEventAvro mapScenarioAdded(HubEventMessagesProto.ScenarioAddedEvent p) {
         ScenarioAddedEventAvro e = new ScenarioAddedEventAvro();
         e.setName(p.getName());
 
         List<ScenarioConditionAvro> conditions = new ArrayList<>();
-        for (HubEventProto.ScenarioConditionProto c : p.getConditionsList()) {
+        for (HubEventMessagesProto.ScenarioCondition c : p.getConditionsList()) {
             ScenarioConditionAvro ca = new ScenarioConditionAvro();
             ca.setSensorId(c.getSensorId());
             ca.setType(mapConditionType(c.getType()));
             ca.setOperation(mapConditionOperation(c.getOperation()));
 
-            Object value = null;
-            if (c.getType() == HubEventProto.ConditionTypeProto.MOTION) {
+            Object value;
+            if (c.getType() == HubEventMessagesProto.ConditionType.MOTION) {
                 value = c.getValue() != 0;
             } else {
                 value = c.getValue();
@@ -76,13 +76,13 @@ public class HubEventProtoMapper {
         e.setConditions(conditions);
 
         List<DeviceActionAvro> actions = new ArrayList<>();
-        for (HubEventProto.ScenarioActionProto a : p.getActionsList()) {
+        for (HubEventMessagesProto.ScenarioAction a : p.getActionsList()) {
             DeviceActionAvro aa = new DeviceActionAvro();
             aa.setSensorId(a.getSensorId());
             aa.setType(mapActionType(a.getType()));
 
             Object value = null;
-            if (a.getType() == HubEventProto.ActionTypeProto.SET_VALUE) {
+            if (a.getType() == HubEventMessagesProto.ActionType.SET_VALUE) {
                 value = a.getValue();
             }
             aa.setValue(value);
@@ -94,13 +94,13 @@ public class HubEventProtoMapper {
         return e;
     }
 
-    private ScenarioRemovedEventAvro mapScenarioRemoved(HubEventProto.ScenarioRemovedEventProto p) {
+    private ScenarioRemovedEventAvro mapScenarioRemoved(HubEventMessagesProto.ScenarioRemovedEvent p) {
         ScenarioRemovedEventAvro e = new ScenarioRemovedEventAvro();
         e.setName(p.getName());
         return e;
     }
 
-    private DeviceTypeAvro mapDeviceType(HubEventProto.DeviceTypeProto t) {
+    private DeviceTypeAvro mapDeviceType(HubEventMessagesProto.DeviceType t) {
         return switch (t) {
             case SWITCH_SENSOR -> DeviceTypeAvro.SWITCH_SENSOR;
             case MOTION_SENSOR -> DeviceTypeAvro.MOTION_SENSOR;
@@ -111,7 +111,7 @@ public class HubEventProtoMapper {
         };
     }
 
-    private ConditionTypeAvro mapConditionType(HubEventProto.ConditionTypeProto t) {
+    private ConditionTypeAvro mapConditionType(HubEventMessagesProto.ConditionType t) {
         return switch (t) {
             case MOTION -> ConditionTypeAvro.MOTION;
             case TEMPERATURE -> ConditionTypeAvro.TEMPERATURE;
@@ -121,7 +121,7 @@ public class HubEventProtoMapper {
         };
     }
 
-    private ConditionOperationAvro mapConditionOperation(HubEventProto.ConditionOperationProto op) {
+    private ConditionOperationAvro mapConditionOperation(HubEventMessagesProto.ConditionOperation op) {
         return switch (op) {
             case EQUALS -> ConditionOperationAvro.EQUALS;
             case GREATER_THAN -> ConditionOperationAvro.GREATER_THAN;
@@ -130,7 +130,7 @@ public class HubEventProtoMapper {
         };
     }
 
-    private ActionTypeAvro mapActionType(HubEventProto.ActionTypeProto t) {
+    private ActionTypeAvro mapActionType(HubEventMessagesProto.ActionType t) {
         return switch (t) {
             case TURN_ON -> ActionTypeAvro.TURN_ON;
             case TURN_OFF -> ActionTypeAvro.TURN_OFF;

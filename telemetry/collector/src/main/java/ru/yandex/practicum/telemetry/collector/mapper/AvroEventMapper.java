@@ -4,9 +4,6 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.collector.api.dto.*;
 
-import java.nio.ByteBuffer;
-import java.time.Instant;
-
 @Component
 public class AvroEventMapper {
 
@@ -28,64 +25,12 @@ public class AvroEventMapper {
         return avro;
     }
 
-    public static HubEventAvro toHubEventAvro(HubEventProto proto) {
-        var builder = HubEventAvro.newBuilder()
-                .setHubId(proto.getHubId())
-                .setTimestamp(Instant.ofEpochMilli(proto.getTimestamp()));
-
-        Object payload;
-
-        switch (proto.getPayloadCase()) {
-            case DEVICE_ADDED -> {
-                var p = proto.getDeviceAdded();
-                payload = DeviceAddedEventAvro.newBuilder()
-                        .setId(p.getId())
-                        .setType(mapDeviceType(p.getType()))
-                        .build();
-            }
-            case DEVICE_REMOVED -> {
-                var p = proto.getDeviceRemoved();
-                payload = DeviceRemovedEventAvro.newBuilder()
-                        .setId(p.getId())
-                        .build();
-            }
-            case SCENARIO_ADDED -> {
-                var p = proto.getScenarioAdded();
-
-                var conditions = p.getConditionsList().stream()
-                        .map(c -> ScenarioConditionAvro.newBuilder()
-                                .setSensorId(c.getSensorId())
-                                .setType(mapConditionType(c.getCondition().getType()))
-                                .setOperation(mapConditionOp(c.getCondition().getOperation()))
-                                .setValue(c.getCondition().getValue()) // int -> union ok
-                                .build())
-                        .toList();
-
-                var actions = p.getActionsList().stream()
-                        .map(a -> DeviceActionAvro.newBuilder()
-                                .setSensorId(a.getSensorId())
-                                .setType(mapActionType(a.getAction().getType()))
-                                .setValue(a.getAction().getValue())
-                                .build())
-                        .toList();
-
-                payload = ScenarioAddedEventAvro.newBuilder()
-                        .setName(p.getName())
-                        .setConditions(conditions)
-                        .setActions(actions)
-                        .build();
-            }
-            case SCENARIO_REMOVED -> {
-                var p = proto.getScenarioRemoved();
-                payload = ScenarioRemovedEventAvro.newBuilder()
-                        .setName(p.getName())
-                        .build();
-            }
-            default -> throw new IllegalArgumentException("Unsupported hub payload: " + proto.getPayloadCase());
-        }
-
-        builder.setPayload(payload);
-        return builder.build();
+    public HubEventAvro toHubEventAvro(String hubId, long timestampMs, byte[] protoPayload) {
+        HubEventAvro avro = new HubEventAvro();
+        avro.setHubId(hubId);
+        avro.setTimestamp(timestampMs);
+        avro.setPayload(protoPayload);
+        return avro;
     }
 
     private MotionSensorAvro motion(MotionSensorEventDto e) {
