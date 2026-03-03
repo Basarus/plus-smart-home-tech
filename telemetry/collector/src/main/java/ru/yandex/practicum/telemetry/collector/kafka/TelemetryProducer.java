@@ -20,6 +20,7 @@ import java.util.Properties;
 
 @Component
 public class TelemetryProducer {
+
     private final TopicsProperties topics;
     private final KafkaProducer<String, byte[]> producer;
 
@@ -29,15 +30,37 @@ public class TelemetryProducer {
     }
 
     public void sendSensorEvent(SensorEventAvro event) {
-        String key = event.getHubId();
+        String key = event.getHubId().toString();
         Long timestamp = toKafkaTimestamp(event.getTimestamp());
+
         producer.send(new ProducerRecord<>(topics.sensors(), null, timestamp, key, serialize(event)));
+        producer.flush();
     }
 
     public void sendHubEvent(HubEventAvro event) {
-        String key = event.getHubId();
+        String key = event.getHubId().toString();
         Long timestamp = toKafkaTimestamp(event.getTimestamp());
+
         producer.send(new ProducerRecord<>(topics.hubs(), null, timestamp, key, serialize(event)));
+        producer.flush();
+    }
+
+    private Long toKafkaTimestamp(Object avroTimestamp) {
+        if (avroTimestamp == null) return null;
+
+        if (avroTimestamp instanceof java.time.Instant i) {
+            return i.toEpochMilli();
+        }
+
+        if (avroTimestamp instanceof Long l) {
+            return l;
+        }
+
+        if (avroTimestamp instanceof Integer i) {
+            return i.longValue();
+        }
+
+        throw new IllegalArgumentException("Unsupported timestamp type: " + avroTimestamp.getClass().getName());
     }
 
     private Properties producerProps(KafkaProps props) {
@@ -48,22 +71,6 @@ public class TelemetryProducer {
         p.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         p.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
         return p;
-    }
-
-    private Long toKafkaTimestamp(Object avroTimestamp) {
-        if (avroTimestamp == null) {
-            return null;
-        }
-        if (avroTimestamp instanceof java.time.Instant i) {
-            return i.toEpochMilli();
-        }
-        if (avroTimestamp instanceof Long l) {
-            return l;
-        }
-        if (avroTimestamp instanceof Integer i) {
-            return i.longValue();
-        }
-        throw new IllegalArgumentException("Unsupported timestamp type: " + avroTimestamp.getClass().getName());
     }
 
     private byte[] serialize(SensorEventAvro event) {

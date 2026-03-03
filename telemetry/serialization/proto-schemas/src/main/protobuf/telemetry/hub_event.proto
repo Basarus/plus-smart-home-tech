@@ -2,10 +2,87 @@ syntax = "proto3";
 
 package telemetry.message.event;
 
-option java_multiple_files = true;
-option java_package = "ru.yandex.practicum.grpc.telemetry.event";
-
 import "google/protobuf/timestamp.proto";
+
+option java_package = "ru.yandex.practicum.grpc.telemetry.message.event";
+option java_multiple_files = true;
+
+message HubEventProto {
+  string hub_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+
+  oneof payload {
+    DeviceAddedEventProto device_added = 3;
+    DeviceRemovedEventProto device_removed = 4;
+    ScenarioAddedEventProto scenario_added = 5;
+    ScenarioRemovedEventProto scenario_removed = 6;
+    DeviceActionRequest device_action_request = 7;
+  }
+}
+
+message DeviceAddedEventProto {
+  string id = 1;
+  DeviceTypeProto type = 2;
+}
+
+message DeviceRemovedEventProto {
+  string id = 1;
+}
+
+message ScenarioAddedEventProto {
+  string name = 1;
+  repeated ScenarioConditionProto conditions = 2;
+  repeated ScenarioActionProto actions = 3;
+}
+
+message ScenarioRemovedEventProto {
+  string name = 1;
+}
+
+message ScenarioConditionProto {
+  string sensor_id = 1;
+
+  ConditionTypeProto type = 2;
+  ConditionOperationProto operation = 3;
+
+  oneof value {
+    bool bool_value = 4;
+    int32 int_value = 5;
+  }
+}
+
+message ScenarioActionProto {
+  string sensor_id = 1;
+
+  ActionTypeProto type = 2;
+
+  oneof value {
+    int32 int_value = 3;
+  }
+}
+
+message ConditionProto {
+  ConditionTypeProto type = 1;
+  ConditionOperationProto operation = 2;
+
+  oneof value {
+    int32 int_value = 3;
+    bool bool_value = 4;
+  }
+}
+
+message DeviceActionProto {
+  string sensor_id = 1;
+  ActionTypeProto type = 2;
+  optional int32 value = 3;
+}
+
+message DeviceActionRequest {
+  string hub_id = 1;
+  string scenario_name = 2;
+  DeviceActionProto action = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
 
 enum DeviceTypeProto {
   MOTION_SENSOR = 0;
@@ -35,50 +112,4 @@ enum ActionTypeProto {
   DEACTIVATE = 1;
   INVERSE = 2;
   SET_VALUE = 3;
-}
-
-message DeviceAddedEventProto {
-  string id = 1;
-  DeviceTypeProto type = 2;
-}
-
-message DeviceRemovedEventProto {
-  string id = 1;
-}
-
-message ScenarioConditionProto {
-  string sensor_id = 1;
-  ConditionTypeProto type = 2;
-  ConditionOperationProto operation = 3;
-  int32 value = 4;
-}
-
-message DeviceActionProto {
-  string sensor_id = 1;
-  ActionTypeProto type = 2;
-  oneof value {
-    int32 int_value = 3;
-  }
-}
-
-message ScenarioAddedEventProto {
-  string name = 1;
-  repeated ScenarioConditionProto conditions = 2;
-  repeated DeviceActionProto actions = 3;
-}
-
-message ScenarioRemovedEventProto {
-  string name = 1;
-}
-
-message HubEventProto {
-  string hub_id = 1;
-  google.protobuf.Timestamp timestamp = 2;
-
-  oneof payload {
-    DeviceAddedEventProto device_added = 3;
-    DeviceRemovedEventProto device_removed = 4;
-    ScenarioAddedEventProto scenario_added = 5;
-    ScenarioRemovedEventProto scenario_removed = 6;
-  }
 }

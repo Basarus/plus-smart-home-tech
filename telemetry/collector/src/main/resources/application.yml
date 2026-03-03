@@ -1,10 +1,21 @@
-server:
-  port: 8080
+spring:
+  application:
+    name: collector
+  main:
+    web-application-type: none
+
+grpc:
+  server:
+    port: 59091
 
 collector:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     client-id: ${KAFKA_CLIENT_ID:collector}
-  topics:
-    sensors: ${KAFKA_TOPIC_SENSORS:telemetry.sensors.v1}
-    hubs: ${KAFKA_TOPIC_HUBS:telemetry.hubs.v1}
+    topics:
+      sensors: ${KAFKA_TOPIC_SENSORS:telemetry.sensors.v1}
+      hubs: ${KAFKA_TOPIC_HUBS:telemetry.hubs.v1}
+
+logging:
+  level:
+    root: INFO
