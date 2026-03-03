@@ -58,7 +58,15 @@ public class HubEventProcessor implements Runnable {
         try {
             while (running.get()) {
                 ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
-                records.forEach(r -> hubEventService.handleHubEvent(r.value()));
+                if (records.isEmpty()) {
+                    continue;
+                }
+
+                for (var r : records) {
+                    hubEventService.handleHubEvent(r.value());
+                }
+
+                consumer.commitSync();
             }
         } catch (WakeupException e) {
             if (running.get()) throw e;

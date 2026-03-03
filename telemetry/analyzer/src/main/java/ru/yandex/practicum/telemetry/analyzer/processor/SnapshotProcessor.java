@@ -33,12 +33,7 @@ public class SnapshotProcessor implements Runnable {
     private final AtomicReference<KafkaConsumer<String, byte[]>> consumerRef = new AtomicReference<>();
     private volatile Thread worker;
 
-    public SnapshotProcessor(
-            @Qualifier("snapshotConsumerProps") Properties consumerProps,
-            @Value("${analyzer.kafka.topics.snapshots:telemetry.snapshots.v1}") String topic,
-            ScenarioEngine scenarioEngine,
-            SensorsSnapshotAvroDeserializer snapshotDeserializer
-    ) {
+    public SnapshotProcessor(@Qualifier("snapshotConsumerProps") Properties consumerProps, @Value("${analyzer.kafka.topics.snapshots:telemetry.snapshots.v1}") String topic, ScenarioEngine scenarioEngine, SensorsSnapshotAvroDeserializer snapshotDeserializer) {
         this.consumerProps = consumerProps;
         this.topic = topic;
         this.scenarioEngine = scenarioEngine;
@@ -82,14 +77,28 @@ public class SnapshotProcessor implements Runnable {
         KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(consumerProps);
         consumerRef.set(consumer);
 
+        boolean processedSomething = false;
+
         try {
             consumer.subscribe(List.of(topic));
 
             while (running.get()) {
                 ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(500));
-                records.forEach(record -> {
+                if (records.isEmpty()) {
+                    continue;
+                }
+
+                for (var record : records) {
                     SensorsSnapshotAvro snapshot = snapshotDeserializer.deserialize(record.value());
                     scenarioEngine.handleSnapshot(snapshot);
+                }
+
+                processedSomething = true;
+
+                consumer.commitAsync((offsets, exception) -> {
+                    if (exception != null) {
+                        log.warn("Async commit failed: {}", offsets, exception);
+                    }
                 });
             }
         } catch (WakeupException ignored) {
@@ -97,6 +106,13 @@ public class SnapshotProcessor implements Runnable {
             log.error("SnapshotProcessor failed", e);
         } finally {
             try {
+                if (processedSomething) {
+                    try {
+                        consumer.commitSync();
+                    } catch (Exception e) {
+                        log.warn("Final commitSync failed", e);
+                    }
+                }
                 consumer.close();
             } catch (Exception ignored) {
             } finally {

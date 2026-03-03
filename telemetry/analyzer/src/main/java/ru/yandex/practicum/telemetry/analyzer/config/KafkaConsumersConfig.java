@@ -41,7 +41,7 @@ public class KafkaConsumersConfig {
         p.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         p.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
 
-        p.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+        p.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
         p.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "500");
 
