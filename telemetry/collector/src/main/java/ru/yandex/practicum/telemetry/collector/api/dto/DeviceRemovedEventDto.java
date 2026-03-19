@@ -1,6 +1,7 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.google.protobuf.Timestamp;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -11,7 +12,7 @@ public record DeviceRemovedEventDto(
         @NotBlank @JsonAlias({
                 "hubId", "hub_id" }) String hubId,
 
-        @NotNull Instant timestamp,
+        @NotNull Timestamp timestamp,
 
         @NotBlank String id
 
@@ -23,7 +24,7 @@ public record DeviceRemovedEventDto(
     }
 
     @Override
-    public Instant getTimestamp() {
+    public Timestamp getTimestamp() {
         return timestamp;
     }
 

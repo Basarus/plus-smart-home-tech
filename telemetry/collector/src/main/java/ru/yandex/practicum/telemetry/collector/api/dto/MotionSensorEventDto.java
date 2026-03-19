@@ -1,6 +1,7 @@
 package ru.yandex.practicum.telemetry.collector.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.google.protobuf.Timestamp;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -12,7 +13,7 @@ public record MotionSensorEventDto(
 
         @NotBlank String hubId,
 
-        @NotNull Instant timestamp,
+        @NotNull Timestamp timestamp,
 
         @NotNull @JsonAlias("link_quality") Integer linkQuality,
 
@@ -33,7 +34,7 @@ public record MotionSensorEventDto(
     }
 
     @Override
-    public Instant getTimestamp() {
+    public Timestamp getTimestamp() {
         return timestamp;
     }
 }
