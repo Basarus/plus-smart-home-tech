@@ -6,10 +6,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.interactionapi.api.ShoppingStoreOperations;
+import ru.yandex.practicum.interactionapi.dto.store.PageProductDto;
 import ru.yandex.practicum.interactionapi.dto.store.ProductDto;
 import ru.yandex.practicum.interactionapi.dto.store.SetProductQuantityStateRequest;
 import ru.yandex.practicum.interactionapi.enums.ProductCategory;
 import ru.yandex.practicum.interactionapi.enums.QuantityState;
+import ru.yandex.practicum.shoppingstore.mapper.PageProductMapper;
 import ru.yandex.practicum.shoppingstore.service.ShoppingStoreService;
 
 import java.util.UUID;
@@ -18,15 +20,19 @@ import java.util.UUID;
 public class ShoppingStoreController implements ShoppingStoreOperations {
 
     private final ShoppingStoreService shoppingStoreService;
+    private final PageProductMapper pageProductMapper;
 
-    public ShoppingStoreController(ShoppingStoreService shoppingStoreService) {
+    public ShoppingStoreController(ShoppingStoreService shoppingStoreService,
+                                   PageProductMapper pageProductMapper) {
         this.shoppingStoreService = shoppingStoreService;
+        this.pageProductMapper = pageProductMapper;
     }
 
     @Override
-    public Page<ProductDto> getProducts(ProductCategory category, int page, int size, String[] sort) {
+    public PageProductDto getProducts(ProductCategory category, int page, int size, String[] sort) {
         PageRequest pageRequest = PageRequest.of(page, size, parseSort(sort));
-        return shoppingStoreService.getProducts(category, pageRequest);
+        Page<ProductDto> productsPage = shoppingStoreService.getProducts(category, pageRequest);
+        return pageProductMapper.toDto(productsPage);
     }
 
     @Override
