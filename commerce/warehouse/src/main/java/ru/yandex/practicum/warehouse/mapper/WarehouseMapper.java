@@ -12,12 +12,12 @@ public class WarehouseMapper {
     public WarehouseProduct toEntity(NewProductInWarehouseRequest request) {
         WarehouseProduct product = new WarehouseProduct();
         product.setProductId(request.productId());
-        product.setFragile(request.fragile());
+        product.setFragile(Boolean.TRUE.equals(request.fragile()));
         product.setWidth(BigDecimal.valueOf(request.dimension().width()));
         product.setHeight(BigDecimal.valueOf(request.dimension().height()));
         product.setDepth(BigDecimal.valueOf(request.dimension().depth()));
         product.setWeight(BigDecimal.valueOf(request.weight()));
-        product.setQuantity(request.quantity());
+        product.setQuantity(0L);
         return product;
     }
 }
