@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: shopping-store
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/smart_home_tech
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: shopping_store
+        format_sql: true
+    show-sql: true
+
+  sql:
+    init:
+      mode: never
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+server:
+  port: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,env

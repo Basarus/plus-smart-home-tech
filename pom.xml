@@ -26,6 +26,8 @@
         <java.version>21</java.version>
         <maven.compiler.release>21</maven.compiler.release>
 
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
+
         <grpc-spring-boot-starter.version>3.1.0.RELEASE</grpc-spring-boot-starter.version>
         <protobuf.version>3.25.5</protobuf.version>
         <kafka.clients.version>3.7.0</kafka.clients.version>
@@ -35,10 +37,19 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>net.devh</groupId>
                 <artifactId>grpc-server-spring-boot-starter</artifactId>
                 <version>${grpc-spring-boot-starter.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>net.devh</groupId>
                 <artifactId>grpc-client-spring-boot-starter</artifactId>
@@ -64,5 +75,4 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
 </project>
