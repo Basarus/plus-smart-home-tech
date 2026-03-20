@@ -47,7 +47,7 @@ public class ShoppingStoreServiceImpl implements ShoppingStoreService {
     @Override
     @Transactional(readOnly = true)
     public ProductDto getProductById(UUID productId) {
-        Product product = productRepository.findByProductIdAndProductState(productId, ProductState.ACTIVE)
+        Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
         return productMapper.toDto(product);
     }

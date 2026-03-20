@@ -1,11 +1,16 @@
 package ru.yandex.practicum.interactionapi.api;
 
-import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import ru.yandex.practicum.interactionapi.dto.store.ProductDto;
-import ru.yandex.practicum.interactionapi.dto.store.SetProductQuantityStateRequest;
 import ru.yandex.practicum.interactionapi.enums.ProductCategory;
+import ru.yandex.practicum.interactionapi.enums.QuantityState;
 
 import java.util.UUID;
 
@@ -22,14 +27,15 @@ public interface ShoppingStoreOperations {
     ProductDto getProductById(@PathVariable UUID productId);
 
     @PutMapping
-    ProductDto createProduct(@Valid @RequestBody ProductDto productDto);
+    ProductDto createProduct(@RequestBody ProductDto productDto);
 
     @PostMapping
-    ProductDto updateProduct(@Valid @RequestBody ProductDto productDto);
+    ProductDto updateProduct(@RequestBody ProductDto productDto);
 
     @PostMapping("/removeProductFromStore")
     ProductDto removeProduct(@RequestBody UUID productId);
 
     @PostMapping("/quantityState")
-    ProductDto setQuantityState(@Valid @RequestBody SetProductQuantityStateRequest request);
+    ProductDto setQuantityState(@RequestParam UUID productId,
+                                @RequestParam QuantityState quantityState);
 }

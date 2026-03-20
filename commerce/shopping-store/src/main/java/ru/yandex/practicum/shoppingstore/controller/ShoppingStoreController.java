@@ -1,14 +1,15 @@
 package ru.yandex.practicum.shoppingstore.controller;
 
-import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.interactionapi.api.ShoppingStoreOperations;
 import ru.yandex.practicum.interactionapi.dto.store.ProductDto;
 import ru.yandex.practicum.interactionapi.dto.store.SetProductQuantityStateRequest;
 import ru.yandex.practicum.interactionapi.enums.ProductCategory;
+import ru.yandex.practicum.interactionapi.enums.QuantityState;
 import ru.yandex.practicum.shoppingstore.service.ShoppingStoreService;
 
 import java.util.UUID;
@@ -24,14 +25,7 @@ public class ShoppingStoreController implements ShoppingStoreOperations {
 
     @Override
     public Page<ProductDto> getProducts(ProductCategory category, int page, int size, String[] sort) {
-        PageRequest pageRequest;
-
-        if (sort != null && sort.length > 0) {
-            pageRequest = PageRequest.of(page, size, parseSort(sort));
-        } else {
-            pageRequest = PageRequest.of(page, size);
-        }
-
+        PageRequest pageRequest = PageRequest.of(page, size, parseSort(sort));
         return shoppingStoreService.getProducts(category, pageRequest);
     }
 
@@ -41,12 +35,12 @@ public class ShoppingStoreController implements ShoppingStoreOperations {
     }
 
     @Override
-    public ProductDto createProduct(@Valid ProductDto productDto) {
+    public ProductDto createProduct(ProductDto productDto) {
         return shoppingStoreService.createProduct(productDto);
     }
 
     @Override
-    public ProductDto updateProduct(@Valid ProductDto productDto) {
+    public ProductDto updateProduct(ProductDto productDto) {
         return shoppingStoreService.updateProduct(productDto);
     }
 
@@ -56,13 +50,46 @@ public class ShoppingStoreController implements ShoppingStoreOperations {
     }
 
     @Override
-    public ProductDto setQuantityState(@Valid SetProductQuantityStateRequest request) {
-        return shoppingStoreService.setQuantityState(request);
+    public ProductDto setQuantityState(@RequestParam UUID productId,
+                                       @RequestParam QuantityState quantityState) {
+        return shoppingStoreService.setQuantityState(
+                new SetProductQuantityStateRequest(productId, quantityState)
+        );
     }
 
     private Sort parseSort(String[] sortParams) {
-        Sort sort = Sort.unsorted();
+        if (sortParams == null || sortParams.length == 0) {
+            return Sort.unsorted();
+        }
 
+        if (sortParams.length == 1) {
+            String raw = sortParams[0];
+            if (raw == null || raw.isBlank()) {
+                return Sort.unsorted();
+            }
+
+            String[] parts = raw.split(",");
+            String property = parts[0].trim();
+            Sort.Direction direction = Sort.Direction.ASC;
+
+            if (parts.length > 1) {
+                direction = Sort.Direction.fromOptionalString(parts[1].trim().toUpperCase())
+                        .orElse(Sort.Direction.ASC);
+            }
+
+            return Sort.by(direction, property);
+        }
+
+        if (sortParams.length == 2 &&
+                !sortParams[0].contains(",") &&
+                !sortParams[1].contains(",")) {
+            String property = sortParams[0].trim();
+            Sort.Direction direction = Sort.Direction.fromOptionalString(sortParams[1].trim().toUpperCase())
+                    .orElse(Sort.Direction.ASC);
+            return Sort.by(direction, property);
+        }
+
+        Sort sort = Sort.unsorted();
         for (String sortParam : sortParams) {
             if (sortParam == null || sortParam.isBlank()) {
                 continue;
