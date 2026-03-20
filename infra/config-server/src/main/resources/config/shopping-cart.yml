@@ -7,9 +7,15 @@ spring:
     username: postgres
     password: postgres
 
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:/db/shopping-cart-schema.sql
+
   jpa:
     hibernate:
       ddl-auto: update
+    defer-datasource-initialization: true
     properties:
       hibernate:
         default_schema: shopping_cart
