@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.interactionapi.dto.cart.ChangeProductQuantityRequest;
 import ru.yandex.practicum.interactionapi.dto.cart.ShoppingCartDto;
-import ru.yandex.practicum.shoppingcart.client.WarehouseClient;
 import ru.yandex.practicum.shoppingcart.client.WarehouseGateway;
 import ru.yandex.practicum.shoppingcart.exception.NoProductsInShoppingCartException;
 import ru.yandex.practicum.shoppingcart.exception.NotAuthorizedUserException;
@@ -41,7 +40,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         validateUsername(username);
 
         ShoppingCart cart = shoppingCartRepository.findByUsername(username)
-                .orElseGet(() -> createEmptyCart(username));
+                .orElseGet(() -> createTransientEmptyCart(username));
 
         return shoppingCartMapper.toDto(cart);
     }
@@ -58,8 +57,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         Map<UUID, Long> merged = new HashMap<>(cart.getItems().stream()
                 .collect(Collectors.toMap(ShoppingCartItem::getProductId, ShoppingCartItem::getQuantity)));
 
-        products.forEach((productId, quantity) ->
-                merged.merge(productId, quantity, Long::sum));
+        products.forEach((productId, quantity) -> merged.merge(productId, quantity, Long::sum));
 
         warehouseGateway.checkProducts(new ShoppingCartDto(cart.getShoppingCartId(), merged));
 
@@ -99,7 +97,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         validateUsername(username);
 
         ShoppingCart cart = shoppingCartRepository.findByUsername(username)
-                .orElseGet(() -> createEmptyCart(username));
+                .orElseGet(() -> createTransientEmptyCart(username));
 
         Set<UUID> existingIds = cart.getItems().stream()
                 .map(ShoppingCartItem::getProductId)
@@ -121,7 +119,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         validateUsername(username);
 
         ShoppingCart cart = shoppingCartRepository.findByUsername(username)
-                .orElseGet(() -> createEmptyCart(username));
+                .orElseGet(() -> createTransientEmptyCart(username));
 
         ensureActive(cart);
 
@@ -159,10 +157,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         cart.setShoppingCartId(UUID.randomUUID());
         cart.setUsername(username);
         cart.setStatus(ShoppingCartStatus.ACTIVE);
+        cart.setItems(new ArrayList<>());
         return shoppingCartRepository.save(cart);
     }
 
-    private ShoppingCart createEmptyCart(String username) {
+    private ShoppingCart createTransientEmptyCart(String username) {
         ShoppingCart cart = new ShoppingCart();
         cart.setShoppingCartId(UUID.randomUUID());
         cart.setUsername(username);
