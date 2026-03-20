@@ -61,6 +61,7 @@ public class ShoppingStoreServiceImpl implements ShoppingStoreService {
         if (product.getProductState() == null) {
             product.setProductState(ProductState.ACTIVE);
         }
+
         Product saved = productRepository.save(product);
         return productMapper.toDto(saved);
     }
@@ -76,22 +77,22 @@ public class ShoppingStoreServiceImpl implements ShoppingStoreService {
     }
 
     @Override
-    public boolean removeProduct(UUID productId) {
+    public ProductDto removeProduct(UUID productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         product.setProductState(ProductState.DEACTIVATE);
-        productRepository.save(product);
-        return true;
+        Product saved = productRepository.save(product);
+        return productMapper.toDto(saved);
     }
 
     @Override
-    public boolean setQuantityState(SetProductQuantityStateRequest request) {
+    public ProductDto setQuantityState(SetProductQuantityStateRequest request) {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new ProductNotFoundException(request.productId()));
 
         product.setQuantityState(request.quantityState());
-        productRepository.save(product);
-        return true;
+        Product saved = productRepository.save(product);
+        return productMapper.toDto(saved);
     }
 }

@@ -18,7 +18,7 @@ public interface ShoppingStoreService {
 
     ProductDto updateProduct(ProductDto productDto);
 
-    boolean removeProduct(UUID productId);
+    ProductDto removeProduct(UUID productId);
 
-    boolean setQuantityState(SetProductQuantityStateRequest request);
+    ProductDto setQuantityState(SetProductQuantityStateRequest request);
 }

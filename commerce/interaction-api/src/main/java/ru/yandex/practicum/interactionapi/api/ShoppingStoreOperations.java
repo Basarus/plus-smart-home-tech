@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface ShoppingStoreOperations {
 
     @GetMapping
-    Page<ProductDto> getProducts(@RequestParam ProductCategory category,
+    Page<ProductDto> getProducts(@RequestParam(required = false) ProductCategory category,
                                  @RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "10") int size,
                                  @RequestParam(required = false) String[] sort);
@@ -28,8 +28,8 @@ public interface ShoppingStoreOperations {
     ProductDto updateProduct(@Valid @RequestBody ProductDto productDto);
 
     @PostMapping("/removeProductFromStore")
-    boolean removeProduct(@RequestBody UUID productId);
+    ProductDto removeProduct(@RequestBody UUID productId);
 
     @PostMapping("/quantityState")
-    boolean setQuantityState(@Valid @RequestBody SetProductQuantityStateRequest request);
+    ProductDto setQuantityState(@Valid @RequestBody SetProductQuantityStateRequest request);
 }

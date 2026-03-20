@@ -51,12 +51,12 @@ public class ShoppingStoreController implements ShoppingStoreOperations {
     }
 
     @Override
-    public boolean removeProduct(UUID productId) {
+    public ProductDto removeProduct(UUID productId) {
         return shoppingStoreService.removeProduct(productId);
     }
 
     @Override
-    public boolean setQuantityState(@Valid SetProductQuantityStateRequest request) {
+    public ProductDto setQuantityState(@Valid SetProductQuantityStateRequest request) {
         return shoppingStoreService.setQuantityState(request);
     }
 
