@@ -32,7 +32,7 @@ public class ShoppingStoreController implements ShoppingStoreOperations {
 
     @Override
     public PageProductDto getProducts(ProductCategory category, int page, int size, String[] sort) {
-        PageRequest pageRequest = PageRequest.of(0, MAX_PRODUCTS_PAGE_SIZE, parseSort(sort));
+        PageRequest pageRequest = PageRequest.of(page, size, parseSort(sort));
         Page<ProductDto> productsPage = shoppingStoreService.getProducts(category, pageRequest);
         return pageProductMapper.toDto(productsPage);
     }
