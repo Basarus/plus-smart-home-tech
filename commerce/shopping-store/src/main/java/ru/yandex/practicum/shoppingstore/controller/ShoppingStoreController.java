@@ -65,13 +65,13 @@ public class ShoppingStoreController implements ShoppingStoreOperations {
 
     private Sort parseSort(String[] sortParams) {
         if (sortParams == null || sortParams.length == 0) {
-            return Sort.unsorted();
+            return Sort.by(Sort.Direction.ASC, "productName");
         }
 
         if (sortParams.length == 1) {
             String raw = sortParams[0];
             if (raw == null || raw.isBlank()) {
-                return Sort.unsorted();
+                return Sort.by(Sort.Direction.ASC, "productName");
             }
 
             String[] parts = raw.split(",");
@@ -113,6 +113,6 @@ public class ShoppingStoreController implements ShoppingStoreOperations {
             sort = sort.and(Sort.by(direction, property));
         }
 
-        return sort;
+        return sort.isSorted() ? sort : Sort.by(Sort.Direction.ASC, "productName");
     }
 }
