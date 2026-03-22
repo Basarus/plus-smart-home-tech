@@ -53,14 +53,14 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         ensureActive(cart);
 
         Map<UUID, Long> merged = new HashMap<>(cart.getItems().stream()
-                .collect(Collectors.toMap(ShoppingCartItem::getProductId, ShoppingCartItem::getQuantity)));
+                .collect(Collectors.toMap(item -> item.getProductId(), item -> item.getQuantity())));
 
         products.forEach((productId, quantity) -> merged.merge(productId, quantity, Long::sum));
 
         warehouseGateway.checkProducts(new ShoppingCartDto(cart.getShoppingCartId(), merged));
 
         Map<UUID, ShoppingCartItem> currentItems = cart.getItems().stream()
-                .collect(Collectors.toMap(ShoppingCartItem::getProductId, Function.identity()));
+                .collect(Collectors.toMap(item -> item.getProductId(), Function.identity()));
 
         for (Map.Entry<UUID, Long> entry : products.entrySet()) {
             ShoppingCartItem item = currentItems.get(entry.getKey());
@@ -97,9 +97,9 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         ShoppingCart cart = shoppingCartRepository.findByUsername(username)
                 .orElseGet(() -> createTransientEmptyCart(username));
 
-        Set<UUID> existingIds = cart.getItems().stream()
-                .map(ShoppingCartItem::getProductId)
-                .collect(Collectors.toSet());
+        List<UUID> existingIds = cart.getItems().stream()
+                .map(item -> item.getProductId())
+                .toList();
 
         boolean hasAny = products.stream().anyMatch(existingIds::contains);
         if (!hasAny) {
@@ -127,7 +127,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                 .orElseThrow(NoProductsInShoppingCartException::new);
 
         Map<UUID, Long> merged = new HashMap<>(cart.getItems().stream()
-                .collect(Collectors.toMap(ShoppingCartItem::getProductId, ShoppingCartItem::getQuantity)));
+                .collect(Collectors.toMap(i -> i.getProductId(), i -> i.getQuantity())));
         merged.put(request.productId(), request.newQuantity());
 
         warehouseGateway.checkProducts(new ShoppingCartDto(cart.getShoppingCartId(), merged));
