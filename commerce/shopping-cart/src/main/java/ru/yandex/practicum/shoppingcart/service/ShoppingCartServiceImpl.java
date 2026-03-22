@@ -1,5 +1,6 @@
 package ru.yandex.practicum.shoppingcart.service;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.interactionapi.dto.cart.ChangeProductQuantityRequest;
@@ -14,25 +15,22 @@ import ru.yandex.practicum.shoppingcart.model.ShoppingCartItem;
 import ru.yandex.practicum.shoppingcart.model.ShoppingCartStatus;
 import ru.yandex.practicum.shoppingcart.repository.ShoppingCartRepository;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 @Transactional
 public class ShoppingCartServiceImpl implements ShoppingCartService {
 
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartMapper shoppingCartMapper;
     private final WarehouseGateway warehouseGateway;
-
-    public ShoppingCartServiceImpl(ShoppingCartRepository shoppingCartRepository,
-                                   ShoppingCartMapper shoppingCartMapper,
-                                   WarehouseGateway warehouseGateway) {
-        this.shoppingCartRepository = shoppingCartRepository;
-        this.shoppingCartMapper = shoppingCartMapper;
-        this.warehouseGateway = warehouseGateway;
-    }
 
     @Override
     @Transactional(readOnly = true)
