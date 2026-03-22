@@ -19,6 +19,8 @@ import java.util.UUID;
 @RestController
 public class ShoppingStoreController implements ShoppingStoreOperations {
 
+    private static final int MAX_PRODUCTS_PAGE_SIZE = 1000;
+
     private final ShoppingStoreService shoppingStoreService;
     private final PageProductMapper pageProductMapper;
 
@@ -30,7 +32,7 @@ public class ShoppingStoreController implements ShoppingStoreOperations {
 
     @Override
     public PageProductDto getProducts(ProductCategory category, int page, int size, String[] sort) {
-        PageRequest pageRequest = PageRequest.of(page, size, parseSort(sort));
+        PageRequest pageRequest = PageRequest.of(0, MAX_PRODUCTS_PAGE_SIZE, parseSort(sort));
         Page<ProductDto> productsPage = shoppingStoreService.getProducts(category, pageRequest);
         return pageProductMapper.toDto(productsPage);
     }
