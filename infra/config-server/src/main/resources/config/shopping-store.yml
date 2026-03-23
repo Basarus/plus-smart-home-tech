@@ -3,7 +3,7 @@ spring:
     name: shopping-store
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/commerce_shopping_store
+    url: jdbc:postgresql://localhost:5432/commerce_shopping_store?currentSchema=shopping_cart
     username: postgres
     password: postgres
 

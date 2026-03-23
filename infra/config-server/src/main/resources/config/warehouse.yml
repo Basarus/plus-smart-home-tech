@@ -3,7 +3,7 @@ spring:
     name: warehouse
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/commerce_warehouse
+    url: jdbc:postgresql://localhost:5432/commerce_warehouse?currentSchema=warehouse
     username: postgres
     password: postgres
 
