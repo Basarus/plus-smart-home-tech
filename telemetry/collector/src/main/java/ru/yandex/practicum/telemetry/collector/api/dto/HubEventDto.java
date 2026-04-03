@@ -3,6 +3,7 @@ package ru.yandex.practicum.telemetry.collector.api.dto;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import com.google.protobuf.Timestamp;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -21,5 +22,5 @@ public sealed interface HubEventDto
         String getHubId();
 
         @NotNull
-        Instant getTimestamp();
+        Timestamp getTimestamp();
 }

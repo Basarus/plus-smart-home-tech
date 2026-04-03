@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: shopping-store
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/commerce_shopping_store?currentSchema=shopping_cart
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        hbm2ddl:
+          create_namespaces: true
+        format_sql: true
+    show-sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+server:
+  port: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,env

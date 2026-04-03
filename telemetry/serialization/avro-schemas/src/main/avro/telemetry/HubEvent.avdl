@@ -1,5 +1,6 @@
 @namespace("ru.yandex.practicum.kafka.telemetry.event")
 protocol HubEventProtocol {
+
   enum DeviceTypeAvro {
     MOTION_SENSOR,
     TEMPERATURE_SENSOR,

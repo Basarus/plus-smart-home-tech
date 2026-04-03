@@ -1,4 +1,38 @@
 services:
+  postgres:
+    image: postgres:16.1
+    container_name: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-init:
+    image: postgres:16.1
+    container_name: db-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - bash
+      - -c
+      - |
+        set -e
+        psql postgresql://postgres:changeme@postgres:5432/postgres -v ON_ERROR_STOP=1 <<-EOSQL
+          CREATE DATABASE commerce_shopping_cart;
+          CREATE DATABASE commerce_shopping_store;
+          CREATE DATABASE commerce_warehouse;
+        EOSQL
+    restart: "no"
+
   kafka:
     image: confluentinc/confluent-local:7.4.3
     hostname: kafka
