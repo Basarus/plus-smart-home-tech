@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import ru.yandex.practicum.interactionapi.enums.PaymentState;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -22,16 +23,16 @@ public class Payment {
     private UUID orderId;
 
     @Column(name = "product_total")
-    private Double productTotal;
+    private BigDecimal productTotal;
 
     @Column(name = "delivery_total")
-    private Double deliveryTotal;
+    private BigDecimal deliveryTotal;
 
     @Column(name = "fee_total")
-    private Double feeTotal;
+    private BigDecimal feeTotal;
 
     @Column(name = "total_payment")
-    private Double totalPayment;
+    private BigDecimal totalPayment;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false)
@@ -53,35 +54,35 @@ public class Payment {
         this.orderId = orderId;
     }
 
-    public Double getProductTotal() {
+    public BigDecimal getProductTotal() {
         return productTotal;
     }
 
-    public void setProductTotal(Double productTotal) {
+    public void setProductTotal(BigDecimal productTotal) {
         this.productTotal = productTotal;
     }
 
-    public Double getDeliveryTotal() {
+    public BigDecimal getDeliveryTotal() {
         return deliveryTotal;
     }
 
-    public void setDeliveryTotal(Double deliveryTotal) {
+    public void setDeliveryTotal(BigDecimal deliveryTotal) {
         this.deliveryTotal = deliveryTotal;
     }
 
-    public Double getFeeTotal() {
+    public BigDecimal getFeeTotal() {
         return feeTotal;
     }
 
-    public void setFeeTotal(Double feeTotal) {
+    public void setFeeTotal(BigDecimal feeTotal) {
         this.feeTotal = feeTotal;
     }
 
-    public Double getTotalPayment() {
+    public BigDecimal getTotalPayment() {
         return totalPayment;
     }
 
-    public void setTotalPayment(Double totalPayment) {
+    public void setTotalPayment(BigDecimal totalPayment) {
         this.totalPayment = totalPayment;
     }
 
