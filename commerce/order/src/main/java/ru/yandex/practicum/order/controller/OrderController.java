@@ -6,6 +6,7 @@ import ru.yandex.practicum.interactionapi.dto.order.CreateNewOrderRequest;
 import ru.yandex.practicum.interactionapi.dto.order.OrderDto;
 import ru.yandex.practicum.order.service.OrderService;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,5 +72,15 @@ public class OrderController implements OrderOperations {
     @Override
     public OrderDto getOrder(UUID orderId) {
         return orderService.getOrder(orderId);
+    }
+
+    @Override
+    public BigDecimal calculateDeliveryCost(UUID orderId) {
+        return orderService.calculateDeliveryCost(orderId);
+    }
+
+    @Override
+    public BigDecimal calculateTotalCost(UUID orderId) {
+        return orderService.calculateTotalCost(orderId);
     }
 }

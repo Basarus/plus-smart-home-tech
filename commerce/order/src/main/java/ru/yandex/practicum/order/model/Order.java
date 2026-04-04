@@ -12,6 +12,7 @@ import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.Table;
 import ru.yandex.practicum.interactionapi.enums.OrderState;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -56,13 +57,13 @@ public class Order {
     private Boolean fragile;
 
     @Column(name = "total_price")
-    private Double totalPrice;
+    private BigDecimal totalPrice;
 
     @Column(name = "delivery_price")
-    private Double deliveryPrice;
+    private BigDecimal deliveryPrice;
 
     @Column(name = "product_price")
-    private Double productPrice;
+    private BigDecimal productPrice;
 
     @Column(name = "from_country")
     private String fromCountry;
@@ -174,27 +175,27 @@ public class Order {
         this.fragile = fragile;
     }
 
-    public Double getTotalPrice() {
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
 
-    public void setTotalPrice(Double totalPrice) {
+    public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
     }
 
-    public Double getDeliveryPrice() {
+    public BigDecimal getDeliveryPrice() {
         return deliveryPrice;
     }
 
-    public void setDeliveryPrice(Double deliveryPrice) {
+    public void setDeliveryPrice(BigDecimal deliveryPrice) {
         this.deliveryPrice = deliveryPrice;
     }
 
-    public Double getProductPrice() {
+    public BigDecimal getProductPrice() {
         return productPrice;
     }
 
-    public void setProductPrice(Double productPrice) {
+    public void setProductPrice(BigDecimal productPrice) {
         this.productPrice = productPrice;
     }
 

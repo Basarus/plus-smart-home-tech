@@ -20,6 +20,7 @@ import ru.yandex.practicum.order.exception.NoOrderFoundException;
 import ru.yandex.practicum.order.model.Order;
 import ru.yandex.practicum.order.repository.OrderRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -249,5 +250,19 @@ public class OrderServiceImpl implements OrderService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal calculateDeliveryCost(UUID orderId) {
+        Order order = getOrderEntity(orderId);
+        return deliveryClient.deliveryCost(toDto(order));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal calculateTotalCost(UUID orderId) {
+        Order order = getOrderEntity(orderId);
+        return paymentClient.getTotalCost(toDto(order));
     }
 }
