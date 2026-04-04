@@ -1,4 +1,4 @@
-package ru.yandex.practicum.payment.service;
+package ru.yandex.practicum.delivery.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -6,10 +6,10 @@ import ru.yandex.practicum.interactionapi.dto.order.OrderDto;
 import ru.yandex.practicum.interactionapi.dto.payment.PaymentDto;
 import ru.yandex.practicum.interactionapi.dto.store.ProductDto;
 import ru.yandex.practicum.interactionapi.enums.PaymentState;
-import ru.yandex.practicum.payment.client.OrderClient;
-import ru.yandex.practicum.payment.client.ShoppingStoreClient;
-import ru.yandex.practicum.payment.model.Payment;
-import ru.yandex.practicum.payment.repository.PaymentRepository;
+import ru.yandex.practicum.delivery.client.OrderClient;
+import ru.yandex.practicum.delivery.client.ShoppingStoreClient;
+import ru.yandex.practicum.delivery.model.Payment;
+import ru.yandex.practicum.delivery.repository.PaymentRepository;
 
 import java.math.BigDecimal;
 import java.util.Map;

@@ -13,13 +13,16 @@ import ru.yandex.practicum.interactionapi.dto.warehouse.AddressDto;
 import ru.yandex.practicum.interactionapi.dto.warehouse.ShippedToDeliveryRequest;
 import ru.yandex.practicum.interactionapi.enums.DeliveryState;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 @Service
 @Transactional
 public class DeliveryServiceImpl implements DeliveryService {
 
-    private static final double BASE_COST = 5.0;
+    private static final BigDecimal BASE_COST = new BigDecimal("5.0");
+    ;
 
     private final DeliveryRepository deliveryRepository;
     private final OrderClient orderClient;
@@ -54,31 +57,31 @@ public class DeliveryServiceImpl implements DeliveryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Double deliveryCost(OrderDto orderDto) {
-        double total = BASE_COST;
+    public BigDecimal deliveryCost(OrderDto orderDto) {
+        BigDecimal total = BASE_COST;
 
         String warehouseAddress = extractWarehouseAddress(orderDto.fromAddress());
         if (warehouseAddress.contains("ADDRESS_2")) {
-            total += BASE_COST * 2;
+            total = total.add(BASE_COST.multiply(BigDecimal.valueOf(2)));
         } else {
-            total += BASE_COST;
+            total = total.add(BASE_COST);
         }
 
         if (Boolean.TRUE.equals(orderDto.fragile())) {
-            total += total * 0.2;
+            total = total.add(total.multiply(new BigDecimal("0.2")));
         }
 
-        total += safe(orderDto.deliveryWeight()) * 0.3;
-        total += safe(orderDto.deliveryVolume()) * 0.2;
+        total = total.add(safe(orderDto.deliveryWeight()).multiply(new BigDecimal("0.3")));
+        total = total.add(safe(orderDto.deliveryVolume()).multiply(new BigDecimal("0.2")));
 
         String fromStreet = orderDto.fromAddress() != null ? orderDto.fromAddress().street() : null;
         String toStreet = orderDto.toAddress() != null ? orderDto.toAddress().street() : null;
 
         if (fromStreet != null && toStreet != null && !fromStreet.equalsIgnoreCase(toStreet)) {
-            total += total * 0.2;
+            total = total.add(total.multiply(new BigDecimal("0.2")));
         }
 
-        return total;
+        return total.setScale(2, RoundingMode.HALF_UP);
     }
 
     @Override
@@ -174,7 +177,7 @@ public class DeliveryServiceImpl implements DeliveryService {
         return String.join(" ", country, city, street, house, flat);
     }
 
-    private double safe(Double value) {
-        return value == null ? 0.0 : value;
+    private BigDecimal safe(Double value) {
+        return value == null ? BigDecimal.ZERO : BigDecimal.valueOf(value);
     }
 }

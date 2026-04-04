@@ -1,4 +1,4 @@
-package ru.yandex.practicum.payment.advice;
+package ru.yandex.practicum.delivery.advice;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;

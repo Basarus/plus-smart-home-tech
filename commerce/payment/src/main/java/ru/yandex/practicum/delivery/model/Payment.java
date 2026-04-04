@@ -1,4 +1,4 @@
-package ru.yandex.practicum.payment.model;
+package ru.yandex.practicum.delivery.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -1,10 +1,10 @@
-package ru.yandex.practicum.payment.controller;
+package ru.yandex.practicum.delivery.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.interactionapi.api.PaymentOperations;
 import ru.yandex.practicum.interactionapi.dto.order.OrderDto;
 import ru.yandex.practicum.interactionapi.dto.payment.PaymentDto;
-import ru.yandex.practicum.payment.service.PaymentService;
+import ru.yandex.practicum.delivery.service.PaymentService;
 
 import java.math.BigDecimal;
 import java.util.UUID;
