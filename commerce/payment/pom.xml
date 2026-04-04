@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>warehouse</artifactId>
+  <artifactId>payment</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
