@@ -7,7 +7,7 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
@@ -26,10 +26,13 @@ services:
       - -c
       - |
         set -e
-        psql postgresql://postgres:changeme@postgres:5432/postgres -v ON_ERROR_STOP=1 <<-EOSQL
-          CREATE DATABASE commerce_shopping_cart;
-          CREATE DATABASE commerce_shopping_store;
-          CREATE DATABASE commerce_warehouse;
+        psql postgresql://postgres:postgres@postgres:5432/postgres -v ON_ERROR_STOP=1 <<-EOSQL
+        CREATE DATABASE commerce_shopping_cart;
+        CREATE DATABASE commerce_shopping_store;
+        CREATE DATABASE commerce_warehouse;
+        CREATE DATABASE commerce_order;
+        CREATE DATABASE commerce_payment;
+        CREATE DATABASE commerce_delivery;
         EOSQL
     restart: "no"
 
