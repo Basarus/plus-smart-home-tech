@@ -1,5 +1,6 @@
 package ru.yandex.practicum.warehouse.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.interactionapi.api.WarehouseOperations;
 import ru.yandex.practicum.interactionapi.dto.cart.ShoppingCartDto;
@@ -19,17 +20,17 @@ public class WarehouseController implements WarehouseOperations {
     }
 
     @Override
-    public void createProduct(NewProductInWarehouseRequest request) {
+    public void createProduct(@Valid NewProductInWarehouseRequest request) {
         warehouseService.createProduct(request);
     }
 
     @Override
-    public void addQuantity(AddProductToWarehouseRequest request) {
+    public void addQuantity(@Valid AddProductToWarehouseRequest request) {
         warehouseService.addQuantity(request);
     }
 
     @Override
-    public BookedProductsDto checkProducts(ShoppingCartDto request) {
+    public BookedProductsDto checkProducts(@Valid ShoppingCartDto request) {
         return warehouseService.checkProducts(request);
     }
 
@@ -39,12 +40,12 @@ public class WarehouseController implements WarehouseOperations {
     }
 
     @Override
-    public BookedProductsDto assemblyProductsForOrder(AssemblyProductsForOrderRequest request) {
+    public BookedProductsDto assemblyProductsForOrder(@Valid AssemblyProductsForOrderRequest request) {
         return warehouseService.assemblyProductsForOrder(request);
     }
 
     @Override
-    public void shippedToDelivery(ShippedToDeliveryRequest request) {
+    public void shippedToDelivery(@Valid ShippedToDeliveryRequest request) {
         warehouseService.shippedToDelivery(request);
     }
 

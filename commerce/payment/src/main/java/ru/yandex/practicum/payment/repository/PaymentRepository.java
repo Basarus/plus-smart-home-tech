@@ -1,7 +1,7 @@
-package ru.yandex.practicum.delivery.repository;
+package ru.yandex.practicum.payment.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.yandex.practicum.delivery.model.Payment;
+import ru.yandex.practicum.payment.model.Payment;
 
 import java.util.UUID;
 

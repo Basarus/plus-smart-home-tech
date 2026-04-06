@@ -1,10 +1,11 @@
-package ru.yandex.practicum.delivery.controller;
+package ru.yandex.practicum.payment.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.interactionapi.api.PaymentOperations;
 import ru.yandex.practicum.interactionapi.dto.order.OrderDto;
 import ru.yandex.practicum.interactionapi.dto.payment.PaymentDto;
-import ru.yandex.practicum.delivery.service.PaymentService;
+import ru.yandex.practicum.payment.service.PaymentService;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -19,17 +20,17 @@ public class PaymentController implements PaymentOperations {
     }
 
     @Override
-    public PaymentDto payment(OrderDto orderDto) {
+    public PaymentDto payment(@Valid OrderDto orderDto) {
         return paymentService.payment(orderDto);
     }
 
     @Override
-    public BigDecimal getTotalCost(OrderDto orderDto) {
+    public BigDecimal getTotalCost(@Valid OrderDto orderDto) {
         return paymentService.getTotalCost(orderDto);
     }
 
     @Override
-    public BigDecimal productCost(OrderDto orderDto) {
+    public BigDecimal productCost(@Valid OrderDto orderDto) {
         return paymentService.productCost(orderDto);
     }
 

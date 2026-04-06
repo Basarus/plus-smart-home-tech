@@ -1,5 +1,6 @@
 package ru.yandex.practicum.order.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.interactionapi.api.OrderOperations;
 import ru.yandex.practicum.interactionapi.dto.order.CreateNewOrderRequest;
@@ -20,7 +21,7 @@ public class OrderController implements OrderOperations {
     }
 
     @Override
-    public OrderDto createNewOrder(CreateNewOrderRequest request) {
+    public OrderDto createNewOrder(@Valid CreateNewOrderRequest request) {
         return orderService.createNewOrder(request);
     }
 

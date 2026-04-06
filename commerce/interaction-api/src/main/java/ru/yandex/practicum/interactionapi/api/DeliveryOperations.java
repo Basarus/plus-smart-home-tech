@@ -1,9 +1,8 @@
 package ru.yandex.practicum.interactionapi.api;
 
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.interactionapi.dto.delivery.DeliveryDto;
 import ru.yandex.practicum.interactionapi.dto.order.OrderDto;
-import ru.yandex.practicum.interactionapi.dto.warehouse.AddressDto;
-import ru.yandex.practicum.interactionapi.enums.DeliveryState;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -12,9 +11,7 @@ import java.util.UUID;
 public interface DeliveryOperations {
 
     @PutMapping
-    ru.yandex.practicum.interactionapi.dto.delivery.DeliveryDto planDelivery(
-            @RequestBody ru.yandex.practicum.interactionapi.dto.delivery.DeliveryDto deliveryDto
-    );
+    DeliveryDto planDelivery(@RequestBody DeliveryDto deliveryDto);
 
     @PostMapping("/cost")
     BigDecimal deliveryCost(@RequestBody OrderDto orderDto);

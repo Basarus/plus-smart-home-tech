@@ -1,4 +1,4 @@
-package ru.yandex.practicum.delivery.service;
+package ru.yandex.practicum.payment.service;
 
 import ru.yandex.practicum.interactionapi.dto.order.OrderDto;
 import ru.yandex.practicum.interactionapi.dto.payment.PaymentDto;

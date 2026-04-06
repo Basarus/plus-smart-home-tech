@@ -17,6 +17,7 @@ import ru.yandex.practicum.order.client.PaymentClient;
 import ru.yandex.practicum.order.client.ShoppingCartClient;
 import ru.yandex.practicum.order.client.WarehouseClient;
 import ru.yandex.practicum.order.exception.NoOrderFoundException;
+import ru.yandex.practicum.order.mapper.OrderMapper;
 import ru.yandex.practicum.order.model.Order;
 import ru.yandex.practicum.order.repository.OrderRepository;
 
@@ -33,17 +34,20 @@ public class OrderServiceImpl implements OrderService {
     private final WarehouseClient warehouseClient;
     private final PaymentClient paymentClient;
     private final DeliveryClient deliveryClient;
+    private final OrderMapper orderMapper;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                             ShoppingCartClient shoppingCartClient,
                             WarehouseClient warehouseClient,
                             PaymentClient paymentClient,
-                            DeliveryClient deliveryClient) {
+                            DeliveryClient deliveryClient,
+                            OrderMapper orderMapper) {
         this.orderRepository = orderRepository;
         this.shoppingCartClient = shoppingCartClient;
         this.warehouseClient = warehouseClient;
         this.paymentClient = paymentClient;
         this.deliveryClient = deliveryClient;
+        this.orderMapper = orderMapper;
     }
 
     @Override
@@ -57,17 +61,19 @@ public class OrderServiceImpl implements OrderService {
         order.setProducts(shoppingCart.products());
         order.setState(OrderState.NEW);
 
-        mapToAddress(order, request.toAddress());
+        orderMapper.mapToAddress(order, request.toAddress());
 
         orderRepository.save(order);
-        return toDto(order);
+        return orderMapper.toDto(order);
     }
 
     @Override
     public OrderDto payment(UUID orderId) {
         Order order = getOrderEntity(orderId);
 
-        if (order.getDeliveryWeight() == null || order.getDeliveryVolume() == null || order.getFragile() == null) {
+        if (order.getDeliveryWeight() == null
+                || order.getDeliveryVolume() == null
+                || order.getFragile() == null) {
             BookedProductsDto booked = warehouseClient.assemblyProductsForOrder(
                     new AssemblyProductsForOrderRequest(order.getProducts(), order.getOrderId())
             );
@@ -79,19 +85,19 @@ public class OrderServiceImpl implements OrderService {
 
         if (isBlank(order.getFromStreet())) {
             AddressDto warehouseAddress = warehouseClient.getAddress();
-            mapFromAddress(order, warehouseAddress);
+            orderMapper.mapFromAddress(order, warehouseAddress);
         }
 
         if (order.getDeliveryPrice() == null) {
-            order.setDeliveryPrice(deliveryClient.deliveryCost(toDto(order)));
+            order.setDeliveryPrice(deliveryClient.deliveryCost(orderMapper.toDto(order)));
         }
 
         if (order.getDeliveryId() == null) {
             DeliveryDto delivery = deliveryClient.planDelivery(
                     new DeliveryDto(
                             null,
-                            buildFromAddress(order),
-                            buildToAddress(order),
+                            orderMapper.buildFromAddress(order),
+                            orderMapper.buildToAddress(order),
                             order.getOrderId(),
                             DeliveryState.CREATED
                     )
@@ -99,15 +105,15 @@ public class OrderServiceImpl implements OrderService {
             order.setDeliveryId(delivery.deliveryId());
         }
 
-        order.setProductPrice(paymentClient.productCost(toDto(order)));
-        order.setTotalPrice(paymentClient.getTotalCost(toDto(order)));
+        order.setProductPrice(paymentClient.productCost(orderMapper.toDto(order)));
+        order.setTotalPrice(paymentClient.getTotalCost(orderMapper.toDto(order)));
 
-        PaymentDto payment = paymentClient.payment(toDto(order));
+        PaymentDto payment = paymentClient.payment(orderMapper.toDto(order));
         order.setPaymentId(payment.paymentId());
         order.setState(OrderState.ON_PAYMENT);
 
         orderRepository.save(order);
-        return toDto(order);
+        return orderMapper.toDto(order);
     }
 
     @Override
@@ -115,7 +121,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrderEntity(orderId);
         order.setState(OrderState.PAID);
         orderRepository.save(order);
-        return toDto(order);
+        return orderMapper.toDto(order);
     }
 
     @Override
@@ -123,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrderEntity(orderId);
         order.setState(OrderState.PAYMENT_FAILED);
         orderRepository.save(order);
-        return toDto(order);
+        return orderMapper.toDto(order);
     }
 
     @Override
@@ -131,7 +137,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrderEntity(orderId);
         order.setState(OrderState.DELIVERED);
         orderRepository.save(order);
-        return toDto(order);
+        return orderMapper.toDto(order);
     }
 
     @Override
@@ -139,7 +145,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrderEntity(orderId);
         order.setState(OrderState.DELIVERY_FAILED);
         orderRepository.save(order);
-        return toDto(order);
+        return orderMapper.toDto(order);
     }
 
     @Override
@@ -147,7 +153,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrderEntity(orderId);
         order.setState(OrderState.ON_DELIVERY);
         orderRepository.save(order);
-        return toDto(order);
+        return orderMapper.toDto(order);
     }
 
     @Override
@@ -155,7 +161,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrderEntity(orderId);
         order.setState(OrderState.ASSEMBLY_FAILED);
         orderRepository.save(order);
-        return toDto(order);
+        return orderMapper.toDto(order);
     }
 
     @Override
@@ -164,7 +170,7 @@ public class OrderServiceImpl implements OrderService {
         warehouseClient.acceptReturn(order.getProducts());
         order.setState(OrderState.PRODUCT_RETURNED);
         orderRepository.save(order);
-        return toDto(order);
+        return orderMapper.toDto(order);
     }
 
     @Override
@@ -172,14 +178,28 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderDto> getUserOrders(String username) {
         return orderRepository.findAllByUsername(username)
                 .stream()
-                .map(this::toDto)
+                .map(orderMapper::toDto)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public OrderDto getOrder(UUID orderId) {
-        return toDto(getOrderEntity(orderId));
+        return orderMapper.toDto(getOrderEntity(orderId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal calculateDeliveryCost(UUID orderId) {
+        Order order = getOrderEntity(orderId);
+        return deliveryClient.deliveryCost(orderMapper.toDto(order));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal calculateTotalCost(UUID orderId) {
+        Order order = getOrderEntity(orderId);
+        return paymentClient.getTotalCost(orderMapper.toDto(order));
     }
 
     private Order getOrderEntity(UUID orderId) {
@@ -187,82 +207,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new NoOrderFoundException(orderId));
     }
 
-    private OrderDto toDto(Order order) {
-        return new OrderDto(
-                order.getOrderId(),
-                order.getShoppingCartId(),
-                order.getProducts(),
-                order.getPaymentId(),
-                order.getDeliveryId(),
-                order.getState(),
-                order.getDeliveryWeight(),
-                order.getDeliveryVolume(),
-                order.getFragile(),
-                order.getTotalPrice(),
-                order.getDeliveryPrice(),
-                order.getProductPrice(),
-                buildFromAddress(order),
-                buildToAddress(order)
-        );
-    }
-
-    private AddressDto buildFromAddress(Order order) {
-        return new AddressDto(
-                order.getFromCountry(),
-                order.getFromCity(),
-                order.getFromStreet(),
-                order.getFromHouse(),
-                order.getFromFlat()
-        );
-    }
-
-    private AddressDto buildToAddress(Order order) {
-        return new AddressDto(
-                order.getToCountry(),
-                order.getToCity(),
-                order.getToStreet(),
-                order.getToHouse(),
-                order.getToFlat()
-        );
-    }
-
-    private void mapFromAddress(Order order, AddressDto address) {
-        if (address == null) {
-            return;
-        }
-        order.setFromCountry(address.country());
-        order.setFromCity(address.city());
-        order.setFromStreet(address.street());
-        order.setFromHouse(address.house());
-        order.setFromFlat(address.flat());
-    }
-
-    private void mapToAddress(Order order, AddressDto address) {
-        if (address == null) {
-            return;
-        }
-        order.setToCountry(address.country());
-        order.setToCity(address.city());
-        order.setToStreet(address.street());
-        order.setToHouse(address.house());
-        order.setToFlat(address.flat());
-    }
-
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public BigDecimal calculateDeliveryCost(UUID orderId) {
-        Order order = getOrderEntity(orderId);
-        return deliveryClient.deliveryCost(toDto(order));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public BigDecimal calculateTotalCost(UUID orderId) {
-        Order order = getOrderEntity(orderId);
-        return paymentClient.getTotalCost(toDto(order));
     }
 }
